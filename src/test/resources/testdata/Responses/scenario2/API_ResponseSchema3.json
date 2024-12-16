@@ -1,0 +1,67 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Welcome10",
+    "definitions": {
+        "Welcome10": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "rooms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Room"
+                    }
+                }
+            },
+            "required": [
+                "rooms"
+            ],
+            "title": "Welcome10"
+        },
+        "Room": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "roomid": {
+                    "type": "integer"
+                },
+                "roomName": {
+                    "type": "string",
+                    "format": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "accessible": {
+                    "type": "boolean"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "roomPrice": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "accessible",
+                "description",
+                "features",
+                "image",
+                "roomName",
+                "roomPrice",
+                "roomid",
+                "type"
+            ],
+            "title": "Room"
+        }
+    }
+}

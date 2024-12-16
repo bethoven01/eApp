@@ -1,0 +1,7 @@
+		Then Verify Page Title is "Login"
+		Then Verify Default Value "text" having "name" "ctl00$content$txtUserName" is ""
+		Then Enter value "ashwani_fil" in "text" having "name" "ctl00$content$txtUserName"
+		Then Verify Default Value "password" having "name" "ctl00$content$txtPassword" is ""
+		Then Enter value "Password1@3" in "password" having "name" "ctl00$content$txtPassword"
+		Then Click element "submit" having "xPath" "//input[@type='submit']"
+		Then Verify Page Title is "Welcome"

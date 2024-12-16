@@ -1,0 +1,152 @@
+{
+  "testData": {
+    "input_Restful-booker-platform demo_Subject": {
+      "aria-describedby": "basic-addon1",
+      "placeholder": "Subject",
+      "id": "subject",
+      "type": "text",
+      "data-testid": "ContactSubject",
+      "class": "form-control",
+      "aria-label": "Subject"
+    },
+    "input_Zoho Accounts_": {
+      "autocorrect": "off",
+      "onfocus": "this.value \u003d this.value;",
+      "autocomplete": "current-password",
+      "maxlength": "250",
+      "name": "PASSWORD",
+      "id": "password",
+      "placeholder": "Enter password",
+      "onkeydown": "clearCommonError(\u0027password\u0027)",
+      "type": "password",
+      "class": "textbox",
+      "autocapitalize": "off",
+      "required": ""
+    },
+    "input_Zoho Accounts_Chu$2507": {
+      "autocorrect": "off",
+      "onfocus": "this.value \u003d this.value;",
+      "autocomplete": "current-password",
+      "maxlength": "250",
+      "name": "PASSWORD",
+      "id": "password",
+      "placeholder": "Enter password",
+      "onkeydown": "clearCommonError(\u0027password\u0027)",
+      "type": "password",
+      "class": "textbox",
+      "autocapitalize": "off",
+      "required": ""
+    },
+    "input_Login_UserName": {
+      "autocomplete": "off",
+      "name": "ctl00$content$txtUserName",
+      "id": "ctl00_content_txtUserName",
+      "type": "text",
+      "class": "textBox",
+      "aria-label": "User Name"
+    },
+    "input_Restful-booker-platform demo_Email": {
+      "aria-describedby": "basic-addon1",
+      "name": "email",
+      "placeholder": "Email",
+      "id": "email",
+      "type": "text",
+      "class": "form-control room-email",
+      "value": "test@te.com",
+      "data-testid": "ContactEmail",
+      "aria-label": "Email"
+    },
+    "button_Zoho Accounts_": {
+      "id": "nextbtn",
+      "class": "btn blue"
+    },
+    "input_Login_Login": {
+      "name": "ctl00$content$cmdLogin",
+      "id": "ctl00_content_cmdLogin",
+      "type": "submit",
+      "aria-lable": "Login",
+      "value": "Login"
+    },
+    "input_Login_Password": {
+      "autocomplete": "off",
+      "name": "ctl00$content$txtPassword",
+      "id": "ctl00_content_txtPassword",
+      "type": "password",
+      "class": "textBox",
+      "aria-label": "Password"
+    },
+    "input_Restful-booker-platform demo_Lastname": {
+      "aria-describedby": "basic-addon1",
+      "name": "lastname",
+      "placeholder": "Lastname",
+      "type": "text",
+      "class": "form-control room-lastname",
+      "value": "last",
+      "aria-label": "Lastname"
+    },
+    "input_Restful-booker-platform demo_Firstname": {
+      "aria-describedby": "basic-addon1",
+      "name": "firstname",
+      "placeholder": "Firstname",
+      "type": "text",
+      "class": "form-control room-firstname",
+      "value": "test",
+      "aria-label": "Firstname"
+    },
+    "input_Zoho Accounts_bethoven001@gmail.com": {
+      "onfocus": "this.selectionStart \u003d this.selectionEnd \u003d this.value.length",
+      "autocomplete": "webauthn username email",
+      "type": "text",
+      "autocapitalize": "off",
+      "required": "",
+      "oninput": "checking()",
+      "autocorrect": "off",
+      "jsid": "country_code_select",
+      "name": "LOGIN_ID",
+      "id": "login_id",
+      "placeholder": "Email address or mobile number",
+      "onkeydown": "clearCommonError(\u0027login_id\u0027)",
+      "value": "",
+      "class": "textbox"
+    },
+    "input_Login_Changepassword": {
+      "name": "ctl00$content$chkChangePwd",
+      "id": "ctl00_content_chkChangePwd",
+      "type": "checkbox",
+      "aria-label": "Change password"
+    },
+    "button_Restful-booker-platform demo_": {
+      "style": "margin-right: 10px;",
+      "id": "submitContact",
+      "type": "button",
+      "class": "btn btn-outline-primary float-right book-room"
+    },
+    "input_Restful-booker-platform demo_Phone": {
+      "aria-describedby": "basic-addon1",
+      "name": "phone",
+      "placeholder": "Phone",
+      "id": "phone",
+      "type": "text",
+      "class": "form-control room-phone",
+      "value": "01234567890",
+      "data-testid": "ContactPhone",
+      "aria-label": "Phone"
+    },
+    "input_Restful-booker-platform demo_Name": {
+      "aria-describedby": "basic-addon1",
+      "placeholder": "Name",
+      "id": "name",
+      "type": "text",
+      "data-testid": "ContactName",
+      "class": "form-control",
+      "aria-label": "Name"
+    },
+    "textarea_Restful-booker-platform demo_Description": {
+      "id": "description",
+      "rows": "5",
+      "data-testid": "ContactDescription",
+      "class": "form-control",
+      "aria-label": "Description"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Welcome9",
+    "definitions": {
+        "Welcome9": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "theme_color": {
+                    "type": "string"
+                },
+                "background_color": {
+                    "type": "string"
+                },
+                "display": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "start_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "short_name": {
+                    "type": "string"
+                },
+                "icons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Icon"
+                    }
+                }
+            },
+            "required": [
+                "background_color",
+                "display",
+                "icons",
+                "name",
+                "scope",
+                "short_name",
+                "start_url",
+                "theme_color"
+            ],
+            "title": "Welcome9"
+        },
+        "Icon": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "src": {
+                    "type": "string"
+                },
+                "sizes": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "sizes",
+                "src",
+                "type"
+            ],
+            "title": "Icon"
+        }
+    }
+}
