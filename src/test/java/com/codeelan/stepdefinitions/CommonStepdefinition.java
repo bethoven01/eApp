@@ -62,6 +62,11 @@ public class CommonStepdefinition extends FLUtilities {
         Assert.assertTrue(value.equalsIgnoreCase(verifyDefaultValue(driver, elementByLocator(driver, locator, null, null, attributeValue))));
     }
 
+    @Then("Verify value is {string} for {string} having {string} {string}")
+    public void verifyValue(String value, String wizardType, String locator, String attributeValue) {
+        Assert.assertTrue(value.equalsIgnoreCase(verifyDefaultValue(driver, elementByLocator(driver, locator, null, null, attributeValue))));
+    }
+
     @Then("Verify Placeholder of {string} having {string} {string} is {string}")
     public void verifyPlaceholder(String wizardType, String locator, String attributeValue, String value) {
         Assert.assertTrue(value.equalsIgnoreCase(verifyPlaceholder(driver, elementByLocator(driver, locator, null, null, attributeValue))));
@@ -82,12 +87,35 @@ public class CommonStepdefinition extends FLUtilities {
         new Select(elementByLocator(driver, locator, null, null, attributeValue)).getFirstSelectedOption().getText().equalsIgnoreCase(value);
     }
 
+    @Then("Verify dropdown value is {string} for {string} having {string} {string}")
+    public void verifyValueDropdown(String value, String type, String locator, String attributeValue) {
+        new Select(elementByLocator(driver, locator, null, null, attributeValue)).getFirstSelectedOption().getText().equalsIgnoreCase(value);
+    }
+
     @Then("Verity Default value of checkbox {string} having {string} {string} is {string}")
     public void verifyDefaultValueCheckbox(String type, String locator, String attributeValue, String value) {
         WebElement element = elementByLocator(driver, locator, null, null, attributeValue);
         element.click();
         Assert.assertTrue(String.valueOf(executor.executeScript("return arguments[0].defaultChecked;", element)).equalsIgnoreCase(value));
         element.click();
+    }
+
+    @Then("Verify Default Value of checkbox having {string} {string} is {string}")
+    @Then("Verify Default Value of radio having {string} {string} is {string}")
+    public void verifyDefaultValueRadio(String locator, String attributeValue, String value) {
+        WebElement element = elementByLocator(driver, locator, null, null, attributeValue);
+        value = value.equalsIgnoreCase("checked") ? "true" : "false";
+        element.click();
+        Assert.assertTrue(String.valueOf(executor.executeScript("return arguments[0].defaultChecked;", element)).equalsIgnoreCase(value));
+        element.click();
+    }
+
+    @Then("Verify checkbox value is {string} for {string} having {string} {string}")
+    @Then("Verify radio value is {string} for {string} having {string} {string}")
+    public void verifyValueRadio(String value, String type, String locator, String attributeValue) {
+        WebElement element = elementByLocator(driver, locator, null, null, attributeValue);
+        value = value.equalsIgnoreCase("checked") ? "true" : "false";
+        Assert.assertTrue(String.valueOf(executor.executeScript("return arguments[0].checked;", element)).equalsIgnoreCase(value));
     }
 
     @Then ("{string} {string} having {string} {string}")

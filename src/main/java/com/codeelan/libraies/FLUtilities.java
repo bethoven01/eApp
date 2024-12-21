@@ -98,7 +98,6 @@ public class FLUtilities extends BaseClass {
         syncElement(driver, element, EnumsCommon.TOVISIBLE.getText());
         try {
             element.clear();
-            clickElement(driver, element);
             element.sendKeys(stringToInput);
             element.sendKeys(Keys.TAB);
         } catch (Exception e) {
@@ -123,7 +122,6 @@ public class FLUtilities extends BaseClass {
         waitForPageToLoad(driver);
         syncElement(driver, element, EnumsCommon.TOVISIBLE.getText());
         try {
-            element.clear();
             clickElement(driver, element);
             return element.getAttribute("value");
         } catch (Exception e) {

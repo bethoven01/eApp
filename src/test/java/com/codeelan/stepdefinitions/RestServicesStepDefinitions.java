@@ -39,10 +39,9 @@ public class RestServicesStepDefinitions extends FLUtilities {
         this.onRestMasterPage = context.getPageObjectManager().getRestMasterPage();
     }
 
-    @Given("Call API {int} {string} request {string} URL with following parameters")
-    public void callAPI(int counterAPI, String restURL, String method, DataTable dataTable) {
-        parametersMap = dataTable.asMap(String.class, String.class);
-        response = onRestMasterPage.callRESTservice(restURL, method, parametersMap, String.valueOf(counterAPI), testContext, rest_All);
+    @Given("Call API {int} {string} request {string} URL")
+    public void callAPI(int counterAPI, String restURL, String method) {
+        response = onRestMasterPage.callRESTservice(restURL, method, String.valueOf(counterAPI), testContext, rest_All);
         respBody = response.getBody().prettyPrint();
         Allure.addAttachment("Response Body", respBody);
     }
@@ -52,8 +51,10 @@ public class RestServicesStepDefinitions extends FLUtilities {
     @Given("Save Field from Response {string}")
     public void saveFieldFromResponse(String fields) {
         for (String field : fields.split(", ")) {
+            String originalKey = field.substring(0, field.indexOf(":")).trim();
+            field = field.substring(field.indexOf(":")+1).trim();
             List<String> respFields = onRestMasterPage.saveResponseFields(response, field, testContext, rest_All);
-            addPropertyValueInJSON(testContext.getTestCaseID(), testContext, respFields.get(0), respFields.get(1));
+            addPropertyValueInJSON(testContext.getTestCaseID(), testContext, originalKey, respFields.get(1));
         }
     }
 

@@ -33,9 +33,9 @@ public class RestMasterPage extends FLUtilities {
         initElements(driver);
     }
 
-    public Response callRESTservice(String restUrl, String method, Map<String, String> map, String counterAPI, TestContext testContext, RestAPICalls rest_All) {
+    public Response callRESTservice(String restUrl, String method, String counterAPI, TestContext testContext, RestAPICalls rest_All) {
         log.info("Inside callRESTservice()");
-        response = rest_All.test(restUrl, method, map, counterAPI, testContext);
+        response = rest_All.test(restUrl, method, counterAPI, testContext);
         return response;
     }
 

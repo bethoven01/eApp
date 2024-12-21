@@ -7,6 +7,8 @@ import com.codeelan.libraies.Enums.EnumsTestingTypes;
 import com.codeelan.libraies.EnumsCommon;
 import com.codeelan.libraies.FLException;
 import com.codeelan.libraies.FLUtilities;
+import io.cucumber.core.internal.com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.core.internal.com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.poi.ss.usermodel.*;
@@ -17,7 +19,10 @@ import org.json.simple.parser.JSONParser;
 import org.openqa.selenium.support.PageFactory;
 
 import java.io.*;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -91,6 +96,7 @@ public class E2EFlowDataPage extends FLUtilities {
                 int scenarioIndex = findColumnIndex(headerRow, "Scenario");
                 int testCaseNameIndex = findColumnIndex(headerRow, "TestCaseName");
                 int testCaseSheetIndex = findColumnIndex(headerRow, "TestCaseSheet");
+                int tagsIndex = findColumnIndex(headerRow, "Tags");
                 int executeIndex = findColumnIndex(headerRow, "Execute");
 
                 // Iterate through the rows of the sheet, starting from the second row
@@ -103,17 +109,24 @@ public class E2EFlowDataPage extends FLUtilities {
                     String scenario = getCellValue(currentRow.getCell(scenarioIndex));
                     String testCaseName = getCellValue(currentRow.getCell(testCaseNameIndex));
                     String testCaseSheet = getCellValue(currentRow.getCell(testCaseSheetIndex));
+                    String tags = getCellValue(currentRow.getCell(tagsIndex));
                     String execute = getCellValue(currentRow.getCell(executeIndex));
 
                     // Check if the 'Execute' column value is 'yes'
                     if (execute.equalsIgnoreCase("yes")) {
-                        createRunnerFile(testingType, scenario);
+                        List<String> tagsList = new ArrayList<>(List.of(tags.split(",")));
+                        tagsList.add(testingType.trim() + "_" + scenario);
+                        tagsList.remove("");
+                        tagsList = tagsList.stream().map(tag -> "@" + tag.trim()).collect(Collectors.toList());
+                        String allTags = String.join(" ", tagsList);
+                        createRunnerFile(testingType, scenario, tags);
+
                         switch (testingType) {
                             case "UI":
-                                createUIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData);
+                                createUIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData, allTags);
                                 break;
                             case "API":
-                                createAPIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData);
+                                createAPIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData, allTags);
                                 break;
                         }
                     }
@@ -144,14 +157,15 @@ public class E2EFlowDataPage extends FLUtilities {
      * @param scenario     - product name
      * @param testCaseName - Spec from client
      */
-    public void createUIFeatureFile(String featureName, String description, String scenario, String testCaseName, String testCaseSheet, String testingType, JSONObject jsonTestData) {
+    public void createUIFeatureFile(String featureName, String description, String scenario, String testCaseName, String testCaseSheet, String testingType, JSONObject jsonTestData, String allTags) {
         List<String> lines = new ArrayList<>();
         File tempFile = null;
         String line;
+
         try {
             lines.add("Feature: " + featureName + "\n");
             lines.add("\t" + description + "\n");
-            lines.add("\t@" + testingType + "-" + scenario);
+            lines.add("\t" + allTags);
             lines.add("\tScenario: " + scenario + " - " + testCaseName);
             lines.add("\t\tGiven User is on login page for TestCase \"" + testingType + "-" + scenario + "\"");
 
@@ -244,7 +258,8 @@ public class E2EFlowDataPage extends FLUtilities {
                             if (tempClientJsonData.containsKey(tempJsonKey.toString())) {
                                 if (!tempClientJsonData.get(tempJsonKey.toString()).toString().equalsIgnoreCase(tempClientNewJsonData.get(tempJsonKey.toString()).toString()))
                                     tempClientJsonData.put(tempJsonKey.toString(), tempClientNewJsonData.get(tempJsonKey.toString()).toString());
-                            }
+                            } else
+                                tempClientJsonData.put(tempJsonKey.toString(), tempClientNewJsonData.get(tempJsonKey.toString()).toString());
                         }
                         tempClientData.put(temp.toString(), tempClientJsonData);
                     } catch (Exception e) {
@@ -267,14 +282,15 @@ public class E2EFlowDataPage extends FLUtilities {
      * @param scenario     - product name
      * @param testCaseName - Spec from client
      */
-    public void createAPIFeatureFile(String featureName, String description, String scenario, String testCaseName, String testCaseSheet, String testingType, JSONObject jsonTestData) {
+    public void createAPIFeatureFile(String featureName, String description, String scenario, String testCaseName, String testCaseSheet, String testingType, JSONObject jsonTestData, String allTags) {
         List<String> lines = new ArrayList<>();
         File tempFile = null;
         String line;
+
         try {
             lines.add("Feature: " + featureName + "\n");
             lines.add("\t" + description + "\n");
-            lines.add("\t@" + testingType + "-" + scenario);
+            lines.add("\t" + allTags);
             lines.add("\tScenario: " + scenario + " - " + testCaseName);
             lines.add("\t\tGiven User is on login page for TestCase \"" + testingType + "-" + scenario + "\"");
 
@@ -326,14 +342,43 @@ public class E2EFlowDataPage extends FLUtilities {
                     counterAPI++;
                 lines.add("\t\t" + createAPIStep(steps, baseURI, endPoint, method, params, auth, headers, body, script, field, value, counterAPI));
 
-                tempRowJson.put("endpoint", endPoint);
-                tempRowJson.put("params", params);
-                tempRowJson.put("auth", auth);
-                tempRowJson.put("headers", headers);
-                tempRowJson.put("body", body);
-                tempRowJson.put("script", script);
-                tempRowJson.put("field", field);
-                tempRowJson.put("response", response);
+                if(!endPoint.equals(""))
+                    tempRowJson.put("endpoint", endPoint);
+                if(!params.equals(""))
+                    tempRowJson.put("params", params);
+                if(!auth.equals(""))
+                    tempRowJson.put("auth", auth);
+                if(!headers.equals(""))
+                    tempRowJson.put("headers", headers);
+                if (!body.equals("")) {
+                    List<String> bodyFields = new ArrayList<>();
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String body1 = body;
+                    List<Map<String, Object>> formData = new ArrayList<>();
+// try {
+                    if (isFormEncoded(body1)) {
+                        body1 = body1.replaceAll("]", "").replaceAll("\\[", "");
+                        formData = parseFormEncoded(body1);
+                    } else if (isJson(body1)) {
+                        formData = objectMapper.readValue(body1, new TypeReference<List<Map<String, Object>>>() {
+                        });
+                    }
+                    for (Map<String, Object> data : formData) {
+                        for (String key : data.keySet()) {
+                            tempRowJson.put(key + "JSON", data.get(key).toString().replaceAll("\"", ""));
+                            bodyFields.add(key + "JSON");
+                        }
+                    }
+                    tempRowJson.put("bodyFields", String.join(", ", bodyFields));
+                }
+                    tempRowJson.put("body", body);
+                if(!script.equals(""))
+                    tempRowJson.put("script", script);
+                if(!field.equals(""))
+                    tempRowJson.put("field", field);
+                if(!response.equals(""))
+                    tempRowJson.put("response", response);
+
                 if(steps.equalsIgnoreCase("Call API"))
                     tempJson.put(String.valueOf(counterAPI), tempRowJson);
             }
@@ -368,16 +413,29 @@ public class E2EFlowDataPage extends FLUtilities {
                 } else {
                     return "Then " + steps + " \"" + testData + "\" in \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\"";
                 }
+            case "\"Check\"":
+            case "\"Uncheck\"":
             case "Click element":
                 return "Then " + steps + " \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\"";
             case "Verify Default Value":
             case "Verify Placeholder":
             case "Verify Max Length":
                 return "Then " + steps + " of \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\" is \"" + testData + "\"";
+            case "Verify Default Value of checkbox":
+            case "Verify Default Value of radio":
+                testData = testData.equals("true") ? "checked" : "unchecked";
+                return "Then " + steps + " having \"" + locatorType + "\" \"" + commonTag + "\" is \"" + testData + "\"";
             case "Verify Default Value of dropdown":
                 return "Then " + steps + " \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\" is \"" + testData + "\"";
             case "Select value":
                 return "Then " + steps + " \"" + testData + "\" for dropdown \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\"";
+            case "Verify radio value":
+            case "Verify checkbox value":
+                testData = testData.equals("true") ? "checked" : "unchecked";
+                return "Then " + steps + " is \"" + testData + "\" for \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\"";
+            case "Verify value":
+            case "Verify dropdown value":
+                return "Then " + steps + " is \"" + testData + "\" for \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\"";
             case "Enter value from JSON":
                 if (locatorType.contains("xpath")) {
                     return "Then " + steps + " \"" + fieldName + "\" in \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + "with attribute " + attribute + " and attribute value " + commonTag + "\"";
@@ -426,15 +484,7 @@ public class E2EFlowDataPage extends FLUtilities {
         StringBuilder builder = new StringBuilder();
         switch (steps) {
             case "Call API":
-                builder.append("When " + steps + " " + counterAPI + " \"" + baseURI + "\" request \"" + method + "\" URL with following parameters\n");
-                builder.append("\t\t | endpoint | JSON |\n");
-                builder.append("\t\t | params | JSON |\n");
-                builder.append("\t\t | auth | JSON |\n");
-                builder.append("\t\t | headers | JSON |\n");
-                builder.append("\t\t | body | JSON |\n");
-                builder.append("\t\t | script | JSON |\n");
-                builder.append("\t\t | field | JSON |");
-                return builder.toString();
+                return "When " + steps + " " + counterAPI + " \"" + baseURI + endPoint + "\" request \"" + method + "\" URL";
             case "Save Field from Response":
                 return "When " + steps + " \"" + field + "\"";
             case "Verify field from Response":
@@ -450,26 +500,35 @@ public class E2EFlowDataPage extends FLUtilities {
     /**
      * Create runner file based on module and jurisdiction
      */
-    public void createRunnerFile(String testingType, String scenario) {
-        ArrayList<String> lines = new ArrayList<>();
-        String line;
+    public void createRunnerFile(String testingType, String scenario, String tags) {
+        List<String> tagsList = Arrays.asList(tags.split(","));
+        tagsList = tagsList.get(0).equals("") ? List.of(testingType + "_" + scenario) : tagsList;
+
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(EnumsCommon.RUNNERFILESPATH.getText() + "RunOriginalTest.java"));
-            while ((line = reader.readLine()) != null) {
-                line = line.replaceAll("com.codeelan.runner", "com.codeelan.runner.TestCases");
-                line = line.replaceAll("RunOriginalTest", testingType + "_" + scenario + "_" + "RunTest");
-                line = replaceLine(line, "tags = ", "\t\ttags = \"@" + testingType + "-" + scenario + "\",");
-                lines.add(line);
+            for(String tag : tagsList) {
+                String line;
+                ArrayList<String> lines = new ArrayList<>();
+                tag = tag.trim();
+                String fileName = tag + "_" + "RunTest.java";
+                File tempFile = new File(EnumsCommon.RUNNERFILESPATH.getText() + "TestCases/" + fileName);
+                if (!tempFile.exists()) {
+                    tempFile.getParentFile().mkdirs();
+                    BufferedReader reader = new BufferedReader(new FileReader(EnumsCommon.RUNNERFILESPATH.getText() + "RunOriginalTest.java"));
+                    while ((line = reader.readLine()) != null) {
+                        line = line.replaceAll("com.codeelan.runner", "com.codeelan.runner.TestCases");
+                        line = line.replaceAll("RunOriginalTest", tag + "_" + "RunTest");
+                        line = replaceLine(line, "tags = ", "\t\ttags = \"@" + tag + "\",");
+                        lines.add(line);
+                    }
+                    FileWriter runnerFile = new FileWriter(tempFile);
+                    BufferedWriter writer = new BufferedWriter(runnerFile);
+                    for (String line1 : lines)
+                        writer.write(line1 + "\n");
+                    writer.close();
+                    reader.close();
+                    System.out.println("Runner File Created");
+                }
             }
-            reader.close();
-            File tempFile = new File(EnumsCommon.RUNNERFILESPATH.getText() + "TestCases/" + testingType + "_" + scenario + "_" + "RunTest.java");
-            tempFile.getParentFile().mkdirs();
-            FileWriter runnerFile = new FileWriter(tempFile);
-            BufferedWriter writer = new BufferedWriter(runnerFile);
-            for (String line1 : lines)
-                writer.write(line1 + "\n");
-            writer.close();
-            System.out.println("Runner File Created");
         } catch (IOException e) {
             throw new FLException("File is inaccessible" + e.getMessage());
         }
@@ -512,5 +571,26 @@ public class E2EFlowDataPage extends FLUtilities {
         return line.contains(toBeReplaced) ? replacement : line;
     }
 
+    private boolean isJson(String s) {
+        return s.trim().startsWith("[") && s.trim().endsWith("]");
+    }
+    private boolean isFormEncoded(String s) {
+        return s.contains("=");
+    }
+    private List<Map<String, Object>> parseFormEncoded(String s) {
+        String[] pairs = s.split("&");
+        List<Map<String, Object>> map = new ArrayList<>();
+        for (String pair : pairs) {
+            int idx = pair.indexOf("=");
+            if(idx > 0) {
+                Map<String, Object> tempMap = new HashMap<>();
+                String key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8);
+                Object value = URLDecoder.decode(pair.substring(idx+1), StandardCharsets.UTF_8);
+                tempMap.put(key, value);
+                map.add(tempMap);
+            }
+        }
+        return map;
+    }
 }
 
