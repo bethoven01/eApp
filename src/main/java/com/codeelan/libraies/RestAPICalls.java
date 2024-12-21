@@ -1,5 +1,8 @@
 package com.codeelan.libraies;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,6 +11,8 @@ import java.util.stream.Collectors;
 import com.codeelan.libraies.TestContext;
 import com.jayway.jsonpath.JsonPath;
 import io.restassured.RestAssured;
+import io.restassured.filter.log.RequestLoggingFilter;
+import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -18,28 +23,54 @@ import static io.restassured.RestAssured.given;
 
 
 public class RestAPICalls {
-    Map<String, String> validJson = new HashMap<>();
-    Response response;
-    String header, method;
-    String[][] arrli; // = {{"AccountNumber","1245896"},{"Type","GHMI"},{"Url","simpleuser001.com"},{"Date","07/25/1981"}};
+    private Response response;
 
     public Response call(RequestSpecification request, String method) {
 
+        // Create streams to capture logs
+        ByteArrayOutputStream requestLogStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream responseLogStream = new ByteArrayOutputStream();
+
+        // Add logging filters to capture request and response
+        request.filter(new RequestLoggingFilter(new PrintStream(requestLogStream)));
+        request.filter(new ResponseLoggingFilter(new PrintStream(responseLogStream)));
+
+        // Switch-case for handling HTTP methods
         switch (method.toLowerCase()) {
 
             case "post":
-                response = request.log().all().post();
+                response = request.log().all().post(); // Log request
                 break;
             case "get":
-                response = request.log().all().get();
+                response = request.log().all().get(); // Log request
                 break;
             case "put":
-                response = request.contentType(ContentType.JSON).log().all().put("");
+                response = request.log().all().put(); // Log request
                 break;
             case "delete":
-                response = request.contentType(ContentType.JSON).log().all().delete("");
+                response = request.log().all().delete(); // Log request
                 break;
+            default:
+                throw new IllegalArgumentException("Unsupported HTTP method: " + method);
         }
+
+        // Log the response
+        response.then().log().all();
+
+        // Attach captured request log to Allure
+        Allure.addAttachment("HTTP Request", "text/plain", requestLogStream.toString());
+
+        // Attach captured response log to Allure
+        Allure.addAttachment("HTTP Response", "text/plain", responseLogStream.toString());
+
+        // Close the streams to avoid memory leaks
+        try {
+            requestLogStream.close();
+            responseLogStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return response;
     }
 
@@ -47,7 +78,7 @@ public class RestAPICalls {
         String testJSON = testContext.getMapTestData().get(counterAPI).trim();
         String field = testJSON.contains("field") ? JsonPath.read(testJSON, "$.field").toString().trim() : "";
         String endpoint = testJSON.contains("endpoint") ? JsonPath.read(testJSON, "$.endpoint").toString().trim() : "";
-        String param = testJSON.contains("params") ? JsonPath.read(testJSON, "$.params").toString().trim() : "";
+        String param = testJSON.contains("params") ? replacePlaceholders(JsonPath.read(testJSON, "$.params").toString().trim(),testContext) : "";
         String headers = testJSON.contains("headers") ? replacePlaceholders(JsonPath.read(testJSON, "$.headers").toString().trim(), testContext) : "";
         List<String> fieldList = headers.equals("") ? new ArrayList<>() : Arrays.asList(headers.replaceAll("[{}]", "").split("\\|"));
         List<String> fieldList1 = new ArrayList<>();
@@ -60,10 +91,10 @@ public class RestAPICalls {
         Map<String, String> requestHeaders = fieldList.isEmpty() ? new HashMap<>() : fieldList.stream()
                 .map(s -> s.split("="))
                 .collect(Collectors.toMap(s -> s[0].trim(), s -> s[1].trim()));
-
-        RestAssured.baseURI = restUrl + param;
-        RequestSpecification request = given();
-        request.headers(requestHeaders);
+//
+//        RestAssured.baseURI = restUrl + param;
+        RequestSpecification request = given().baseUri(restUrl+param)
+                .headers(requestHeaders);
 
         String body = "";
         if(testJSON.contains("body")) {
@@ -76,9 +107,8 @@ public class RestAPICalls {
         }
         request.body(body);
 
-        // Post the request and check the response
+        // Post the request and log request/response
         return (call(request, method));
-        //return response;
     }
 
     public static String replacePlaceholders(String template, TestContext testContext) {
@@ -98,7 +128,7 @@ public class RestAPICalls {
         return result.toString();
     }
 
-    public Object getKey(JSONObject json, String key) {
+    public static Object getKey(JSONObject json, String key) {
         boolean exists = json.has(key);
         Iterator<?> keys;
         String nextKeys;

@@ -98,6 +98,7 @@ public class FLUtilities extends BaseClass {
         syncElement(driver, element, EnumsCommon.TOVISIBLE.getText());
         try {
             element.clear();
+            clickElement(driver, element);
             element.sendKeys(stringToInput);
             element.sendKeys(Keys.TAB);
         } catch (Exception e) {

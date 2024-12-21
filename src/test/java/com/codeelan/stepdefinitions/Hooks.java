@@ -7,8 +7,10 @@ import com.codeelan.libraies.TestContext;
 import io.cucumber.java.*;
 import io.qameta.allure.Allure;
 
+import io.restassured.RestAssured;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.junit.jupiter.api.AfterEach;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -93,8 +95,9 @@ public class Hooks extends FLUtilities {
 
     @After
     public void cleanUp() {
+        RestAssured.reset();
 
-        if(testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> !tag.contains("API"))) {
+        if(!testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API"))) {
 
             String sessionID = ((ChromeDriver) testContext.getDriver().getDelegate()).getSessionId().toString();
 
@@ -158,6 +161,12 @@ public class Hooks extends FLUtilities {
             }
         }
     }
+//
+//    @AfterEach
+//    public void resetRestAssured() {
+//        RestAssured.reset();
+//    }
+
 
     private static void takeScreenshot(WebDriver driver, By locator, int index, String getTextForHeal) {
         try {

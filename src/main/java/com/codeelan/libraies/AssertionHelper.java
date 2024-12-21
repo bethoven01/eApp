@@ -152,4 +152,14 @@ public class AssertionHelper {
     public static String bold(String text) {
         return new StringBuffer().append("<b>").append(text).append("</b>").toString();
     }
+
+    public static String getNodeValue(Response response, String node) {
+        String value = "";
+        try {
+            value = response.jsonPath().get(node);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return value;
+    }
 }

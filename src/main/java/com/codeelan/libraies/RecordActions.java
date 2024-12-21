@@ -69,12 +69,12 @@ public class RecordActions {
         //Flow interface sheet
         String featureName = "Login functionality";
         String description = "Verify login functionality";
-        String scenario = "test";
+        String scenario = args[0];
         String testCaseName = "Verify login functionality";
         String testCaseWorkbook = "Product1.xlsx";
         String testCaseWorkbook1 = "API.xlsx";
         String execute = "Yes";
-        String url = "https://rahulshettyacademy.com/AutomationPractice/";
+        String url = args[1];
         System.out.println(scenario);
         System.out.println(url);
 
