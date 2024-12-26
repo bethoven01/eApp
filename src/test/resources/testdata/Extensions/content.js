@@ -68,12 +68,6 @@
         var ignoreAttributes = ['onclick', 'onload', 'onchange', 'onmouseover', 'onfocus'];
         if (id && (id.match(/\d+/g) === null) && document.getElementById(id) !== null) return ['id', id];
         if (name && document.getElementsByName(name).length == 1) return ['name', name];
-        try {
-            var cssSelector = getUniqueCssSelector(element);
-            if (document.querySelectorAll(cssSelector).length === 1) return ['cssSelector', cssSelector];
-        } catch (e) {
-            console.error('Css selector is not valid');
-        }
         var xpath = '//' + element.localName;
         var xpath1 = '';
         for (var attrName in attributes) {
@@ -88,6 +82,12 @@
         xpath1 = xpath + '[text()=\"' + valueAttrib.replace(/\"/g, '&quot;') + '\"]';
         if (document.evaluate(xpath1, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotLength === 1) {
             return ['xpath', xpath1];
+        }
+		try {
+            var cssSelector = getUniqueCssSelector(element);
+            if (document.querySelectorAll(cssSelector).length === 1) return ['cssSelector', cssSelector];
+        } catch (e) {
+            console.error('Css selector is not valid');
         }
         return ['none', ''];
     };

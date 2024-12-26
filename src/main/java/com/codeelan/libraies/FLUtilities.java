@@ -25,7 +25,7 @@ public class FLUtilities extends BaseClass {
     protected void syncElement(SelfHealingDriver driver, WebElement element, String conditionForWait) {
         try {
             FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
-                    .pollingEvery(Duration.ofMillis(200))
+                    .pollingEvery(Duration.ofMillis(500))
                     .withTimeout(Duration.ofSeconds(Integer.parseInt(configProperties.getProperty("explicit_wait"))))
                     .ignoring(NoSuchElementException.class);
 
@@ -52,21 +52,28 @@ public class FLUtilities extends BaseClass {
 
     protected void clickElement(SelfHealingDriver driver, WebElement element) {
         scrollToWebElement(driver, element);
-        syncElement(driver, element, EnumsCommon.TOVISIBLE.getText());
+        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
         try {
             scrollToWebElement(driver, element);
             element.click();
         } catch (Exception e) {
-            try {
-                Log.info("Retrying click using Actions class");
-                new Actions(driver).moveToElement(element).click().perform();
-            } catch (Exception ex) {
-                Log.warn("Retrying click using moveByOffset due to failure", ex);
+            try{
+                Log.info("Retrying click using JS class");
+                clickElementByJSE(driver,element);
+            }
+            catch (Exception e1)
+            {
                 try {
-                    new Actions(driver).moveToElement(element).moveByOffset(10, 10).click().perform();
-                } catch (Exception finalEx) {
-                    Log.error("Could not click WebElement using Actions and moveByOffset", finalEx);
-                    throw new FLException("Could not click WebElement using Actions and moveByOffset: " + finalEx.getMessage() + "Element -> " + element);
+                    Log.info("Retrying click using JS class");
+                    new Actions(driver).moveToElement(element).click().perform();
+                } catch (Exception ex) {
+                    Log.warn("Retrying click using moveByOffset due to failure", ex);
+                    try {
+                        new Actions(driver).moveToElement(element).moveByOffset(10, 10).click().perform();
+                    } catch (Exception finalEx) {
+                        Log.error("Could not click WebElement using Actions and moveByOffset", finalEx);
+                        throw new FLException("Could not click WebElement using Actions and moveByOffset: " + finalEx.getMessage() + "Element -> " + element);
+                    }
                 }
             }
         }
@@ -74,10 +81,10 @@ public class FLUtilities extends BaseClass {
 
     protected void scrollToWebElement(SelfHealingDriver driver, WebElement element) {
         try {
-            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoViewIfNeeded(true);", element);
         } catch (Exception e) {
             Log.error("Could Not Scroll WebElement ", e);
-            throw new FLException("Could Not Scroll WebElement " + e.getMessage() + element);
+            //throw new FLException("Could Not Scroll WebElement " + e.getMessage() + element);
         }
     }
 
@@ -180,17 +187,6 @@ public class FLUtilities extends BaseClass {
             throw new FLException("Element is not available in DOM " + se.getMessage());
         } catch (Exception e) {
             throw new FLException("Error in populating dropdown " + e.getMessage());
-        }
-    }
-
-    protected void clickElement(SelfHealingDriver driver, String stringXpath) {
-        WebElement element = driver.findElement(By.xpath(stringXpath));
-        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
-        try {
-            new Actions(driver).moveToElement(element).click().perform();
-        } catch (Exception e) {
-            Log.error("Could Not Click WebElement ", e);
-            throw new FLException("Could Not Click WebElement " + e.getMessage());
         }
     }
 
@@ -345,6 +341,8 @@ public class FLUtilities extends BaseClass {
 
     protected WebElement elementByLocator( SelfHealingDriver driver, String locatorType, String tagName, String attribute, String attributeValue) {
         WebElement element = null;
+        waitForPageToLoad(driver);
+        sleepInMilliSeconds(2000);
         switch (locatorType.trim().toLowerCase()){
             case "id" :
                 element = driver.findElement(By.id(attributeValue));

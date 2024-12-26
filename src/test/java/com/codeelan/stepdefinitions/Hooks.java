@@ -104,7 +104,7 @@ public class Hooks extends FLUtilities {
             //String sessionID = ((ChromeDriver) testContext.getDriver()).getSessionId().toString();
             System.out.println("Session ID end " + sessionID);
 
-            closeBrowser(testContext);
+//            closeBrowser(testContext);
 
             // Initialize WebDriver
 
@@ -161,12 +161,6 @@ public class Hooks extends FLUtilities {
             }
         }
     }
-//
-//    @AfterEach
-//    public void resetRestAssured() {
-//        RestAssured.reset();
-//    }
-
 
     private static void takeScreenshot(WebDriver driver, By locator, int index, String getTextForHeal) {
         try {

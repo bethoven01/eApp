@@ -78,7 +78,6 @@ public class RestServicesStepDefinitions extends FLUtilities {
         AssertionHelper.assertLong(response.time(), expectedStatusLine, "Verify response time");
     }
 
-
     @Then("Verify schema of preceding response {int} is {string}")
     public void verifyJSONSchema(int apiCount, String jsonSchemaPath) {
         response.then().body(JsonSchemaValidator.matchesJsonSchemaInClasspath(jsonSchemaPath));

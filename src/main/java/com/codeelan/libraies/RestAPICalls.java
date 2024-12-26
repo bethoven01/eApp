@@ -8,12 +8,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.codeelan.libraies.TestContext;
 import com.jayway.jsonpath.JsonPath;
-import io.restassured.RestAssured;
+import io.qameta.allure.Allure;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.json.JSONArray;
@@ -78,7 +76,7 @@ public class RestAPICalls {
         String testJSON = testContext.getMapTestData().get(counterAPI).trim();
         String field = testJSON.contains("field") ? JsonPath.read(testJSON, "$.field").toString().trim() : "";
         String endpoint = testJSON.contains("endpoint") ? JsonPath.read(testJSON, "$.endpoint").toString().trim() : "";
-        String param = testJSON.contains("params") ? replacePlaceholders(JsonPath.read(testJSON, "$.params").toString().trim(),testContext) : "";
+        String param = testJSON.contains("params") ? replacePlaceholders(JsonPath.read(testJSON, "$.params").toString().trim(), testContext) : "";
         String headers = testJSON.contains("headers") ? replacePlaceholders(JsonPath.read(testJSON, "$.headers").toString().trim(), testContext) : "";
         List<String> fieldList = headers.equals("") ? new ArrayList<>() : Arrays.asList(headers.replaceAll("[{}]", "").split("\\|"));
         List<String> fieldList1 = new ArrayList<>();
@@ -93,11 +91,11 @@ public class RestAPICalls {
                 .collect(Collectors.toMap(s -> s[0].trim(), s -> s[1].trim()));
 //
 //        RestAssured.baseURI = restUrl + param;
-        RequestSpecification request = given().baseUri(restUrl+param)
+        RequestSpecification request = given().baseUri(restUrl + param)
                 .headers(requestHeaders);
 
         String body = "";
-        if(testJSON.contains("body")) {
+        if (testJSON.contains("body")) {
             body = replacePlaceholders(JsonPath.read(testJSON, "$.body").toString().trim(), testContext);
             // Add the Json to the body of the request
 //            if (testJSON.contains("bodyFields")) {
