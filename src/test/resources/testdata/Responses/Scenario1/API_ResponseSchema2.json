@@ -1,71 +1,77 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "$ref": "#/definitions/Welcome9",
+    "$ref": "#/definitions/Welcome3",
     "definitions": {
-        "Welcome9": {
+        "Welcome3": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "theme_color": {
-                    "type": "string"
-                },
-                "background_color": {
-                    "type": "string"
-                },
-                "display": {
-                    "type": "string"
-                },
-                "scope": {
-                    "type": "string"
-                },
-                "start_url": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
-                "short_name": {
+                "map": {
+                    "$ref": "#/definitions/Map"
+                },
+                "logoUrl": {
                     "type": "string"
                 },
-                "icons": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Icon"
-                    }
+                "description": {
+                    "type": "string"
+                },
+                "contact": {
+                    "$ref": "#/definitions/Contact"
                 }
             },
             "required": [
-                "background_color",
-                "display",
-                "icons",
-                "name",
-                "scope",
-                "short_name",
-                "start_url",
-                "theme_color"
+                "contact",
+                "description",
+                "logoUrl",
+                "map",
+                "name"
             ],
-            "title": "Welcome9"
+            "title": "Welcome3"
         },
-        "Icon": {
+        "Contact": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "src": {
+                "name": {
                     "type": "string"
                 },
-                "sizes": {
+                "address": {
                     "type": "string"
                 },
-                "type": {
+                "phone": {
+                    "type": "string"
+                },
+                "email": {
                     "type": "string"
                 }
             },
             "required": [
-                "sizes",
-                "src",
-                "type"
+                "address",
+                "email",
+                "name",
+                "phone"
             ],
-            "title": "Icon"
+            "title": "Contact"
+        },
+        "Map": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "latitude",
+                "longitude"
+            ],
+            "title": "Map"
         }
     }
 }

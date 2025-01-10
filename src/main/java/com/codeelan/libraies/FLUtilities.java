@@ -25,8 +25,8 @@ public class FLUtilities extends BaseClass {
     protected void syncElement(SelfHealingDriver driver, WebElement element, String conditionForWait) {
         try {
             FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
-                    .pollingEvery(Duration.ofMillis(500))
-                    .withTimeout(Duration.ofSeconds(5))
+                    .pollingEvery(Duration.ofMillis(200))
+                    .withTimeout(Duration.ofSeconds(Integer.parseInt(configProperties.getProperty("explicit_wait"))))
                     .ignoring(NoSuchElementException.class);
 
             switch (conditionForWait) {
@@ -54,7 +54,7 @@ public class FLUtilities extends BaseClass {
         try {
             FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
                     .pollingEvery(Duration.ofMillis(500))
-                    .withTimeout(Duration.ofSeconds(5))
+                    .withTimeout(Duration.ofSeconds(Integer.parseInt(configProperties.getProperty("explicit_wait"))))
                     .ignoring(NoSuchElementException.class);
 
             switch (conditionForWait) {
@@ -76,13 +76,11 @@ public class FLUtilities extends BaseClass {
         scrollToWebElement(driver, element);
 //        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
         try {
-            scrollToWebElement(driver, element);
-            element.sendKeys(Keys.chord(Keys.ARROW_RIGHT, Keys.ARROW_RIGHT, Keys.ARROW_RIGHT));
-            element.click();
+            clickElementByJSE(driver,element);
         } catch (Exception e) {
             try{
                 Log.info("Retrying click using click method");
-                clickElementByJSE(driver,element);
+                element.click();
             }
             catch (Exception e1)
             {
@@ -92,7 +90,7 @@ public class FLUtilities extends BaseClass {
                 } catch (Exception ex) {
                     Log.warn("Retrying click using moveByOffset due to failure", ex);
                     try {
-                        new Actions(driver).moveToElement(element).moveByOffset(10, 10).click().perform();
+                        new Actions(driver).click().perform();
                     } catch (Exception finalEx) {
                         Log.error("Could not click WebElement using Actions and moveByOffset", finalEx);
                         throw new FLException("Could not click WebElement using Actions and moveByOffset: " + finalEx.getMessage() + "Element -> " + element);
@@ -122,6 +120,7 @@ public class FLUtilities extends BaseClass {
         }
     }
 
+
     protected void sendKeys(SelfHealingDriver driver, WebElement element, String stringToInput) {
         waitForPageToLoad(driver);
         syncElement(driver, element, EnumsCommon.TOVISIBLE.getText());
@@ -129,7 +128,7 @@ public class FLUtilities extends BaseClass {
             element.clear();
             clickElement(driver, element);
             element.sendKeys(stringToInput);
-            element.sendKeys(Keys.TAB);
+           // element.sendKeys(Keys.TAB);
         } catch (Exception e) {
             try {
                 waitForPageToLoad(driver);
@@ -209,7 +208,7 @@ public class FLUtilities extends BaseClass {
         try {
             FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
                     .pollingEvery(Duration.ofMillis(250))
-                    .withTimeout(Duration.ofSeconds(15))
+                    .withTimeout(Duration.ofSeconds(Integer.parseInt(configProperties.getProperty("explicit_wait"))))
                     .ignoring(NoSuchElementException.class);
 
             wait.until(driver1 -> dropdown.getOptions().size() > 3);
@@ -373,6 +372,12 @@ public class FLUtilities extends BaseClass {
         WebElement element = null;
         waitForPageToLoad(driver);
 //        sleepInMilliSeconds(2000);
+        if(locatorType.equalsIgnoreCase("class") && attributeValue.contains(" "))
+        {
+            sleepInMilliSeconds(1000);
+            attributeValue= "." + attributeValue.trim().replaceAll("\\s+", ".");
+            locatorType="cssselector";
+        }
         switch (locatorType.trim().toLowerCase()){
             case "id" :
                 syncElement(driver, By.id(attributeValue), "Presence");
@@ -382,16 +387,26 @@ public class FLUtilities extends BaseClass {
                 syncElement(driver, By.name(attributeValue), "Presence");
                 element = driver.findElement(By.name(attributeValue));
                 break;
+            case "tag" :
+                syncElement(driver, By.tagName(attributeValue), "Presence");
+                element = driver.findElement(By.tagName(attributeValue));
+                break;
             case "class" :
-                syncElement(driver, By.cssSelector("." + attributeValue.replaceAll(" ", ".")), "Presence");
-                element = driver.findElement(By.cssSelector("." + attributeValue.replaceAll(" ", ".")));
+                syncElement(driver, By.className(attributeValue), "Presence");
+                element = driver.findElement(By.className(attributeValue));
+                break;
+            case "linktext" :
+                syncElement(driver, By.linkText(attributeValue), "Presence");
+                element = driver.findElement(By.linkText(attributeValue));
+                break;
+            case "partialinktext" :
+                syncElement(driver, By.partialLinkText("." + attributeValue.replaceAll(" ", ".")), "Presence");
+                element = driver.findElement(By.partialLinkText("." + attributeValue.replaceAll(" ", ".")));
                 break;
             case "xpath" :
-                syncElement(driver, By.xpath(attributeValue), "Presence");
                 element = driver.findElement(By.xpath(attributeValue));
                 break;
             case "cssselector":
-                syncElement(driver, By.cssSelector(attributeValue), "Presence");
                 element = driver.findElement(By.cssSelector(attributeValue));
                 break;
             default:
@@ -415,6 +430,18 @@ public class FLUtilities extends BaseClass {
                 break;
             case "xpath" :
                 elements = driver.findElements(By.xpath("//" + tagName + "[@" + attribute + "='" + attributeValue + "']"));
+                break;
+            case "tag" :
+                syncElement(driver, By.tagName(attributeValue), "Presence");
+                elements = driver.findElements(By.tagName(attributeValue));
+                break;
+            case "linkText" :
+                syncElement(driver, By.linkText(attributeValue), "Presence");
+                elements = driver.findElements(By.linkText(attributeValue));
+                break;
+            case "partialinktext" :
+                syncElement(driver, By.partialLinkText("." + attributeValue.replaceAll(" ", ".")), "Presence");
+                elements = driver.findElements(By.partialLinkText("." + attributeValue.replaceAll(" ", ".")));
                 break;
             default:
                 new FLException("Invalid locator " + locatorType);

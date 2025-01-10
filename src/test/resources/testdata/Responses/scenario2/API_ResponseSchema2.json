@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "$ref": "#/definitions/Welcome8",
+    "$ref": "#/definitions/Welcome7",
     "definitions": {
-        "Welcome8": {
+        "Welcome7": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -29,7 +29,7 @@
                 "map",
                 "name"
             ],
-            "title": "Welcome8"
+            "title": "Welcome7"
         },
         "Contact": {
             "type": "object",

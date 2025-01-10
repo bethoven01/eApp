@@ -39,16 +39,16 @@ public class RestAPICalls {
         switch (method.toLowerCase()) {
 
             case "post":
-                response = request.log().all().post(); // Log request
+                response = request.log().all().when().post(); // Log request
                 break;
             case "get":
-                response = request.log().all().get(); // Log request
+                response = request.log().all().when().get(); // Log request
                 break;
             case "put":
-                response = request.log().all().put(); // Log request
+                response = request.log().all().when().put(); // Log request
                 break;
             case "delete":
-                response = request.log().all().delete(); // Log request
+                response = request.log().all().when().delete(); // Log request
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported HTTP method: " + method);
@@ -79,7 +79,7 @@ public class RestAPICalls {
         restUrl = replacePlaceholders("headers", restUrl, testContext);
         String field = testJSON.contains("field") ? JsonPath.read(testJSON, "$.field").toString().trim() : "";
         String endpoint = testJSON.contains("endpoint") ? JsonPath.read(testJSON, "$.endpoint").toString().trim() : "";
-        String param = testJSON.contains("params") ? replacePlaceholders("params", JsonPath.read(testJSON, "$.params").toString().trim(), testContext) : "";
+        String param = testJSON.contains("params") ? replacePlaceholders("params", JsonPath.read(testJSON, "$.params").toString().trim(), testContext) : restUrl.contains("?") ? restUrl.substring(restUrl.indexOf("?")+1):"";
         String headers = testJSON.contains("headers") ? replacePlaceholders("headers", JsonPath.read(testJSON, "$.headers").toString().trim(), testContext) : "";
         List<String> fieldList = headers.equals("") ? new ArrayList<>() : Arrays.asList(headers.replaceAll("[{}]", "").split("\\|"));
         List<String> fieldList1 = new ArrayList<>();
@@ -95,9 +95,13 @@ public class RestAPICalls {
 //
 //        RestAssured.baseURI = restUrl + param;
 
-        RequestSpecification request = given().config(config().encoderConfig(EncoderConfig.encoderConfig()
-                        .encodeContentTypeAs("multipart/form-data", io.restassured.http.ContentType.TEXT))).baseUri(restUrl + param)
-                .headers(requestHeaders);
+        Map<String, String> queryParams = parseQueryParams(param);
+
+        RequestSpecification request = given()
+                .config(config().encoderConfig(EncoderConfig.encoderConfig()
+                        .encodeContentTypeAs("multipart/form-data", io.restassured.http.ContentType.TEXT)))
+                .baseUri(restUrl.split("\\?")[0])
+                .headers(requestHeaders).queryParams(queryParams);
 
 
         String body = "";
@@ -120,6 +124,21 @@ public class RestAPICalls {
         // Post the request and log request/response
         return (call(request, method));
     }
+
+    public static Map<String, String> parseQueryParams(String query) {
+        Map<String, String> queryParams = new HashMap<>();
+        if (query != null && !query.isEmpty()) {
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=");
+                String key = keyValue[0];
+                String value = keyValue.length > 1 ? keyValue[1] : "";
+                queryParams.put(key, value);
+            }
+        }
+        return queryParams;
+    }
+
 
     public static String replacePlaceholders(String parameter, String template, TestContext testContext) {
         // Regular expression to match placeholders of the form ${key}

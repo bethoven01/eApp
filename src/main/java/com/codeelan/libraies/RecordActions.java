@@ -69,12 +69,12 @@ public class RecordActions {
         //Flow interface sheet
         String featureName = "Login functionality";
         String description = "Verify login functionality";
-        String scenario = "Scenario12";
+        String scenario = args[0];
         String testCaseName = "Verify login functionality";
         String testCaseWorkbook = "Product1.xlsx";
         String testCaseWorkbook1 = "API.xlsx";
         String execute = "Yes";
-        String url = "https://testautomationpractice.blogspot.com/";
+        String url = args[1];
         String preUrl = url.replaceAll("www.", "");
         String domain = preUrl.substring(preUrl.indexOf("//") + 2, preUrl.indexOf("."));
         System.out.println(scenario);
@@ -82,7 +82,7 @@ public class RecordActions {
         System.out.println(domain);
 
         if (!checkScenarioExists(scenario)) {
-            System.out.println("Scenario already exists. Please check");
+            System.out.println(scenario + " Test case already exists. Please check");
             return;
         }
 
@@ -238,6 +238,9 @@ public class RecordActions {
         }
         for (Map<String, Map<String, String>> event : events) {
             Map<String, String> details = event.get("details");
+            if (details.get("type").contains("Alert")) {
+                createStepsAlert(details.get("type"), details.get("defaultValue"), details.get("value"), details.get("action"));
+            } else {
             Map<String, String> secondDetails = new HashMap<>();
             if (events.size() != events.indexOf(event) + 1)
                 secondDetails = events.get(events.indexOf(event) + 1).get("details");
@@ -255,6 +258,7 @@ public class RecordActions {
             String value = details.get("value");
             String pageTitle = details.get("title");
             String type = details.get("type");
+            String innerText = details.get("innerText");
             Object attributes = details.get("attributes");
             Object uniqueLocators = details.get("uniqueLocator");
             List<String> locator = (List<String>) uniqueLocators;
@@ -262,21 +266,29 @@ public class RecordActions {
 
             if (!(secondDetails.isEmpty())) {
                 if (target.equalsIgnoreCase("select")) {
-                    if (action.equalsIgnoreCase("change"))
+                     if(action.equalsIgnoreCase("change"))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
                 } else {
                     if (attrib.containsKey("autocomplete") && !(action.equals(secondDetails.get("action"))) && !(action.equals("click")))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
                     else if (attrib.containsKey("autocomplete") && action.equals("change"))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
-                    else if (!(uniqueLocators.equals(secondDetails.get("uniqueLocator"))))
+                    else if (!(uniqueLocators.equals(secondDetails.get("uniqueLocator")))) {
+                        if (target.equalsIgnoreCase("label")) {
+                            createStepstoVerifyText(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder,innerText);
+                        }
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
-                    else if (target.equalsIgnoreCase("span"))
+                    }
+                        else if (target.equalsIgnoreCase("span"))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
                 }
+            } else if (target.equalsIgnoreCase("label")) {
+                createStepstoVerifyText(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder,innerText);
+
             } else
                 createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
         }
+    }
 
         createTestCaseSheet(testCaseWorkbook, scenario);
         createAPITestCaseSheet(testCaseWorkbook1, scenario);
@@ -293,9 +305,7 @@ public class RecordActions {
             if (attributes.containsKey("type") && !(type.equals("select-one") | type.equals("radio")))
                 type = attributes.get("type");
 
-//            if(className.contains("Datepicker"))
-//                type = "date";
-            if (!(target.equalsIgnoreCase("label") | target.equalsIgnoreCase("option") | target.equalsIgnoreCase("a") | type.equalsIgnoreCase("select-multiple"))) {
+            if (!(target.equalsIgnoreCase("label") | target.equalsIgnoreCase("option") | type.equalsIgnoreCase("select-multiple"))) {
                 switch (action) {
                     case "change":
                     case "input":
@@ -348,23 +358,77 @@ public class RecordActions {
                                 stepsMap.put(stepsCount++, stepsSelectValue(key, locatorType, locatorValue, type, value));
                                 stepsMap.put(stepsCount++, stepsVerifyDropdownValue(key, locatorType, locatorValue, type, value));
                                 break;
-//                            case "date":
-//                                stepsMap.put(stepsCount++, stepsClickDateElement(key, locatorType, locatorValue, type));
+                            case "select-multiple":
+                                setPlaceholder( key, locatorType, locatorValue, type, placeholder);
+                                stepsMap.put(stepsCount++, stepsSelectValue(key, locatorType, locatorValue, type, value));
+                                stepsMap.put(stepsCount++, stepsVerifyDropdownValue(key, locatorType, locatorValue, type, value));
+                                break;
                             default:
-                                if (!type.equals("select-one"))
-                                    stepsMap.put(stepsCount++, stepsClickElement(key, locatorType, locatorValue, type));
-                                //stepsMap.put(stepsCount++, stepsVerifyPage(pageTitle));
+                                 if (!type.equals("select-one")) {
+                                stepsMap.put(stepsCount++, stepsClickElement(key, locatorType, locatorValue, type));
+                            }
                         }
                         break;
                 }
-            } else if (target.equalsIgnoreCase("option")) {
+            }
+            else if (target.equalsIgnoreCase("option")) {
                 stepsMap.put(stepsCount++, stepsClickMultiElement(key, locatorType, locatorValue, type));
-            } else if (target.equalsIgnoreCase("a")) {
-                stepsMap.put(stepsCount++, stepsClickLinkElement(key, target, defaultValue));
             }
         }
     }
 
+    public static void createStepsAlert(String type,String defaultValue, String value, String action) {
+
+                        switch (type) {
+                            case "Alert":
+                            case "ConfirmAlert":
+                                stepsMap.put(stepsCount++, stepsDefaultValueAlert(defaultValue,type));
+                                stepsMap.put(stepsCount++, stepsClickAlert(type, action));
+                                break;
+                            case "PromptAlert":
+                                stepsMap.put(stepsCount++, stepsDefaultValueAlert(defaultValue,type));
+                                stepsMap.put(stepsCount++, stepsEnterValueAlert(value,type));
+                                stepsMap.put(stepsCount++, stepsClickAlert(type, action));
+
+                                break;
+                        }
+    }
+
+    private static Map<String, String> stepsEnterValueAlert(String value, String type) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+        stepsInterfaceMap.put("Steps", "Enter Alert Value");
+        stepsInterfaceMap.put("Wizard Control Types", type);
+        stepsInterfaceMap.put("Test Data",value);
+        return stepsInterfaceMap;
+    }
+
+    private static Map<String, String> stepsClickAlert(String type, String action) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+        stepsInterfaceMap.put("Steps", "Click Alert Element");
+        stepsInterfaceMap.put("Wizard Control Types", type);
+        stepsInterfaceMap.put("Test Data", action);
+
+        return stepsInterfaceMap;
+    }
+
+    private static Map<String, String> stepsDefaultValueAlert(String defaultValue, String type) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+
+        stepsInterfaceMap.put("Steps", "Verify Alert Message");
+        stepsInterfaceMap.put("Wizard Control Types", type);
+        stepsInterfaceMap.put("Test Data", defaultValue);
+        return stepsInterfaceMap;
+    }
+
+    public static void createStepstoVerifyText(String ariaLabel, String className, String defaultValue, String defaultChecked, String id, String localName, String target, String action, String value, String pageTitle, Map<String, String> attributes, List<String> locator, String type, String checked, String maxlength, String placeholder,String innerText) {
+        String key = ariaLabel.replaceAll(" ", "");
+        Map<String, String> data = parentMap.get(key);
+        String locatorType = locator.get(0);
+        String locatorValue = locator.get(1);
+        stepsMap.put(stepsCount++, stepsVerifyText(key, locatorType, locatorValue, type, innerText));
+
+
+    }
     public static Map<String, String> stepsDefaultValue(String key, String locatorType, String locatorValue, String
             type, String defaultValue) {
         Map<String, String> stepsInterfaceMap = new HashMap<>();
@@ -548,14 +612,16 @@ public class RecordActions {
         return stepsInterfaceMap;
     }
 
-//    public static Map<String, String> stepsClickDateElement(String key, String locatorType, String locatorValue, String type) {
-//        Map<String, String> stepsInterfaceMap = new HashMap<>();
-//        stepsInterfaceMap.put("Steps", "Click date element");
-//        stepsInterfaceMap.put("Locator Type", locatorType);
-//        stepsInterfaceMap.put("Common Tag", locatorValue);
-//        stepsInterfaceMap.put("Wizard Control Types", type);
-//        return stepsInterfaceMap;
-//    }
+    public static Map<String, String> stepsVerifyText(String key, String locatorType, String locatorValue, String type,String innerText) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+        stepsInterfaceMap.put("Steps", "Verify text");
+        stepsInterfaceMap.put("Locator Type", locatorType);
+        stepsInterfaceMap.put("Common Tag", locatorValue);
+        stepsInterfaceMap.put("Wizard Control Types", type);
+        stepsInterfaceMap.put("Test Data", innerText.trim());
+        stepsInterfaceMap.put("Field Name", "Text");
+        return stepsInterfaceMap;
+    }
 
     public static Map<String, String> stepsVerifyPage(String pageTitle) {
         Map<String, String> stepsInterfaceMap = new HashMap<>();

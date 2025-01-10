@@ -1,7 +1,6 @@
 package com.codeelan.stepdefinitions;
 
 import com.codeelan.libraies.FLUtilities;
-import com.codeelan.libraies.PageObjectManager;
 import com.codeelan.libraies.TestContext;
 import com.epam.healenium.SelfHealingDriver;
 import io.cucumber.java.en.Given;
@@ -11,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.Select;
 
 public class CommonStepdefinition extends FLUtilities {
@@ -22,6 +23,8 @@ public class CommonStepdefinition extends FLUtilities {
 
     public CommonStepdefinition(TestContext context) {
         testContext = context;
+        driver = context.getDriver();
+        executor = (JavascriptExecutor) driver;
     }
 
     @Given("Open page {string}")
@@ -33,10 +36,29 @@ public class CommonStepdefinition extends FLUtilities {
 
     @Then("Verify Page Title is {string}")
     public void verifyPageTitleIs(String title) {
-        System.out.println("Expected Title"+title);
-        System.out.println("Title name "+((ChromeDriver) testContext.getDriver().getDelegate()).getTitle());
-        System.out.println( "Session ID "+((ChromeDriver) testContext.getDriver().getDelegate()).getSessionId().toString());
-        Assert.assertEquals("Page title verification failed!", title, ((ChromeDriver) testContext.getDriver().getDelegate()).getTitle().trim());
+        System.out.println("Expected Title" + title);
+        String browser= testContext.getBrowser();
+        if(browser.equalsIgnoreCase("Chrome")) {
+
+              System.out.println("Title name "+((ChromeDriver) testContext.getDriver().getDelegate()).getTitle());
+             System.out.println( "Session ID "+((ChromeDriver) testContext.getDriver().getDelegate()).getSessionId().toString());
+            Assert.assertEquals("Page title verification failed!", title, ((ChromeDriver) testContext.getDriver().getDelegate()).getTitle().trim());
+
+        }else if(browser.equalsIgnoreCase("Firefox")){
+            System.out.println("Title name "+((FirefoxDriver) testContext.getDriver().getDelegate()).getTitle());
+            System.out.println( "Session ID "+((FirefoxDriver) testContext.getDriver().getDelegate()).getSessionId().toString());
+            Assert.assertEquals("Page title verification failed!", title, ((FirefoxDriver) testContext.getDriver().getDelegate()).getTitle().trim());
+
+        }else if(browser.equalsIgnoreCase("Edge")){
+            System.out.println("Title name "+((EdgeDriver) testContext.getDriver().getDelegate()).getTitle());
+            System.out.println( "Session ID "+((EdgeDriver) testContext.getDriver().getDelegate()).getSessionId().toString());
+            Assert.assertEquals("Page title verification failed!", title, ((EdgeDriver) testContext.getDriver().getDelegate()).getTitle().trim());
+
+        }else {
+            Assert.assertEquals("Page title verification failed!", title, ((WebDriver) testContext.getDriver().getDelegate()).getTitle().trim());
+
+        }
+
     }
 
     @Then("Enter value {string} in {string} having {string} {string}")
@@ -96,12 +118,12 @@ public class CommonStepdefinition extends FLUtilities {
         element.click();
     }
 
-    @Then("Click link {string} having text as {string}")
-    public void clickLink(String locator, String attributeValue) {
-        String xPath = "//" + locator.toLowerCase() + "[text()='" + attributeValue + "' or @title='" + attributeValue + "']";
-        WebElement element = elementByLocator(driver, "xPath", null, null, xPath);
-        element.click();
-    }
+//    @Then("Click link {string} having text as {string}")
+//    public void clickLink(String locator, String attributeValue) {
+//        String xPath = "//" + locator.toLowerCase() + "[text()='" + attributeValue + "' or @title='" + attributeValue + "']";
+//        WebElement element = elementByLocator(driver, "xPath", null, null, xPath);
+//        element.click();
+//    }
 
     @Then("Verify Default Value of dropdown {string} having {string} {string} is {string}")
     public void verifyDefaultValueDropdown(String type, String locator, String attributeValue, String value) {
@@ -150,14 +172,8 @@ public class CommonStepdefinition extends FLUtilities {
             clickElement(driver, element);
     }
 
-    @Given("User is on login page for TestCase {string} on browser {string}")
-    public void userIsOnLoginPage(String testCaseID, String browser) {
-        if (testContext.getDriver() == null) {
-            testContext.setDriver(getWebDriver(testContext, browser));
-        }
-        testContext.setPageObjectManager(new PageObjectManager(testContext.getDriver()));
-        driver = testContext.getDriver();
-        executor = (JavascriptExecutor) driver;
+    @Given("User is on login page for TestCase {string}")
+    public void userIsOnLoginPage(String testCaseID) {
         commonSetup(testCaseID);
     }
 
@@ -171,5 +187,46 @@ public class CommonStepdefinition extends FLUtilities {
         System.out.println("ScreenshotFolder = " + testContext.getScreenshotFolderName());
         testContext.setMapTestData(getTestData(testCaseID, testContext));
         Log.info("TEST CASE {} STARTED", testCaseID);
+    }
+
+    @Then("Verify element {string} having {string} {string}")
+    public void userVerifiesElementHaving(String wizardType, String locator, String attributeValue) {
+        WebElement element = elementByLocator(driver, locator, null, null, attributeValue);
+        Assert.assertTrue(wizardType + " was not displayed", element.isDisplayed());
+    }
+
+    @Then("Verify text of {string} Should be {string} having {string} {string}")
+    public void userVerifiesTextOfShouldBeHaving(String wizardType, String expectedText, String locator, String attributeValue) {
+        Assert.assertEquals("Text did not match", expectedText, elementByLocator(driver, locator, null, null, attributeValue).getText().trim());
+    }
+
+    @Then("Verify element is enabled {string} having {string} {string}")
+    public void userVerifiesElementIsEnabledHaving(String wizardType, String locator, String attributeValue) {
+        Assert.assertTrue(wizardType + " was not enabled", elementByLocator(driver, locator, null, null, attributeValue).isEnabled());
+    }
+
+    @Then("Verify element is selected {string} having {string} {string}")
+    public void userVerifiesElementIsSelectedHaving(String wizardType, String locator, String attributeValue) {
+        Assert.assertTrue(wizardType + " was not selected", elementByLocator(driver, locator, null, null, attributeValue).isSelected());
+    }
+
+
+    @Then("Verify Alert Message {string} for {string}")
+    public void verifyAlertMessageFor(String message, String AlertType) {
+        Assert.assertEquals(AlertType,message,driver.switchTo().alert().getText());
+
+    }
+
+    @Then("Click Alert Element {string} for {string}")
+    public void clickAlertElementFor(String action, String AlertType) {
+        if(action.equalsIgnoreCase("ok"))
+            driver.switchTo().alert().accept();
+        else
+            driver.switchTo().alert().dismiss();
+    }
+
+    @Then("Enter Alert Value {string} for {string}")
+    public void enterAlertValueFor(String value, String AlertType) {
+            driver.switchTo().alert().sendKeys(value);
     }
 }

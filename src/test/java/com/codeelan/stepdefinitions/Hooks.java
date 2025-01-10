@@ -31,6 +31,11 @@ public class Hooks extends FLUtilities {
     public void setUp(Scenario scenario) {
         loadConfigData(testContext);
         testContext.setScenario(scenario);
+        if (testContext.getDriver() == null) {
+            testContext.setDriver(getWebDriver(testContext));
+        }
+        testContext.setPageObjectManager(new PageObjectManager(testContext.getDriver()));
+        testContext.setScenario(scenario);
     }
 //
 //    @BeforeStep

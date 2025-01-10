@@ -23,7 +23,7 @@ public class CollectionToExcel {
             JsonNode root = objectMapper.readTree(new File(inputFilePath));
 
             JsonNode info = root.get("info");
-            String outputFilePath = EnumsCommon.ABSOLUTE_FILES_PATH.getText() + info.get("name").asText() + ".xlsx";
+            String outputFilePath = EnumsCommon.ABSOLUTE_CLIENTFILES_PATH.getText() + info.get("name").asText() + ".xlsx";
 
             // Create Excel workbook and sheet
             Workbook workbook = new XSSFWorkbook();
@@ -123,7 +123,7 @@ public class CollectionToExcel {
             for (JsonNode param : params) {
                 s1.add(param.get("key").asText() + "=" + param.get("value").asText().trim());
             }
-            return "?" + String.join("&", s1);
+            return String.join("&", s1);
         }
         return "";
     }

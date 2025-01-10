@@ -1,4 +1,4 @@
-# This is repository for CodeElan's UI and API test automation framework
+    # This is repository for CodeElan's UI and API test automation framework
 
 1. Run the [RecordActions.java] with below command (src/test/java/com/codeelan/stepdefinitions/RecordActions.java)
 2. Run the [RunInterfaceTest.java](src/test/java/com/codeelan/runner/RunInterfaceTest.java)

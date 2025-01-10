@@ -7,14 +7,12 @@ import com.codeelan.pages.E2EFlowDataPage;
 import io.cucumber.java.en.Given;
 import org.openqa.selenium.WebDriver;
 
-import java.nio.channels.FileLock;
-
-
 public class ExcelToJSONStepDefinitions extends FLUtilities {
 
     private final E2EFlowDataPage onE2EFlowDataPage;
     private final TestContext testContext;
     private final WebDriver driver;
+
     public ExcelToJSONStepDefinitions(TestContext context) {
         testContext = context;
         if (testContext.getDriver() == null) {

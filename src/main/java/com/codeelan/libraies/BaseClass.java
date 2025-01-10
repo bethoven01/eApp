@@ -31,6 +31,7 @@ public class BaseClass {
     protected static Properties configProperties = null;
     private WebDriver delegate = null;
 
+
     /**
      * This method reads config.properties file and to set different variables at global level in the Framework.
      *
@@ -73,7 +74,7 @@ public class BaseClass {
      * <p>
      * Implicit Wait: Value for Implicit Wait can be changed from config.properties file.
      */
-    protected SelfHealingDriver getWebDriver(TestContext testContext, String browser) {
+    protected SelfHealingDriver getWebDriver(TestContext testContext) {
         try {
             //System.setProperty("webdriver.chrome.driver","/usr/local/bin/chromedriver");
             if(testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API") || tag.equals("@Test")))
@@ -82,7 +83,8 @@ public class BaseClass {
             }
 
             if (configProperties.getProperty("execution.type").trim().equalsIgnoreCase("local")) {
-                switch (browser.trim()) {
+
+                switch (testContext.getBrowser()) {
                     case "Chrome":
                         delegate = new ChromeDriver(getChromeOptions());
                         break;
@@ -91,7 +93,7 @@ public class BaseClass {
                         delegate.manage().window().maximize();
                         break;
                     case "Edge":
-                        delegate = new EdgeDriver(getEdgeOptions());
+                        delegate = new EdgeDriver();
                         delegate.manage().window().maximize();
                         break;
                     default:
@@ -486,7 +488,7 @@ public class BaseClass {
 
         try {
             if (driver != null) {
-//                driver.quit();
+                driver.quit();
                 Log.info("Driver Quit Successfully");
             }
             Log.info("<<<===== END OF TEST =====>>>");
