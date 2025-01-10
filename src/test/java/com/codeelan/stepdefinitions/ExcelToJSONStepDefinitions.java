@@ -1,18 +1,28 @@
 package com.codeelan.stepdefinitions;
 
+import com.codeelan.libraies.FLUtilities;
+import com.codeelan.libraies.PageObjectManager;
 import com.codeelan.libraies.TestContext;
 import com.codeelan.pages.E2EFlowDataPage;
 import io.cucumber.java.en.Given;
+import org.openqa.selenium.WebDriver;
+
+import java.nio.channels.FileLock;
 
 
-public class ExcelToJSONStepDefinitions {
+public class ExcelToJSONStepDefinitions extends FLUtilities {
 
     private final E2EFlowDataPage onE2EFlowDataPage;
     private final TestContext testContext;
-
+    private final WebDriver driver;
     public ExcelToJSONStepDefinitions(TestContext context) {
+        testContext = context;
+        if (testContext.getDriver() == null) {
+            testContext.setDriver(getWebDriver(testContext, "Chrome"));
+        }
+        testContext.setPageObjectManager(new PageObjectManager(testContext.getDriver()));
+        driver = testContext.getDriver();
         onE2EFlowDataPage = context.getPageObjectManager().getE2EFlowDataPage();
-        this.testContext = context;
     }
 
     /**

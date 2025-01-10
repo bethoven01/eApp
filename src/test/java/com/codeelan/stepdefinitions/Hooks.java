@@ -10,7 +10,6 @@ import io.qameta.allure.Allure;
 import io.restassured.RestAssured;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.junit.jupiter.api.AfterEach;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -31,11 +30,6 @@ public class Hooks extends FLUtilities {
     @Before
     public void setUp(Scenario scenario) {
         loadConfigData(testContext);
-        testContext.setScenario(scenario);
-        if (testContext.getDriver() == null) {
-            testContext.setDriver(getWebDriver(testContext));
-        }
-        testContext.setPageObjectManager(new PageObjectManager(testContext.getDriver()));
         testContext.setScenario(scenario);
     }
 //
@@ -97,14 +91,14 @@ public class Hooks extends FLUtilities {
     public void cleanUp() {
         RestAssured.reset();
 
-        if(!testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API"))) {
+        if (!testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API") || tag.equals("@Test"))) {
 
             String sessionID = ((ChromeDriver) testContext.getDriver().getDelegate()).getSessionId().toString();
 
             //String sessionID = ((ChromeDriver) testContext.getDriver()).getSessionId().toString();
             System.out.println("Session ID end " + sessionID);
 
-//            closeBrowser(testContext);
+            closeBrowser(testContext);
 
             // Initialize WebDriver
 
@@ -133,25 +127,25 @@ public class Hooks extends FLUtilities {
                     List<WebElement> healedLocator = driver.findElements(By.xpath("//div[@class='selector-value-row']/div[@class='table-column locator-column']/span"));
                     // Iterate and take screenshots
                     for (int i = 0; i < healedLocator.size(); i++) {
+                        try {
+                            // Click the element to expand or reveal more content
+                            WebElement element = healedLocator.get(i);
+                            element.click();
 
-                        // Click the element to expand or reveal more content
-                        WebElement element = healedLocator.get(i);
-                        element.click();
+                            //syncElement(driver,driver.findElement(By.xpath("(//div[@class='table-column locator-column healing-details'])[" + String.valueOf(i+1) + "]")), EnumsCommon.TOCLICKABLE.getText());
+                            String getTextForHeal = driver.findElement(By.xpath("(//div[@class='table-column locator-column healing-details'])[" + String.valueOf(i + 1) + "]")).getText()
+                                    .replaceAll("Failed", "\nFailed")
+                                    .replaceAll("Healed", "\nHealed")
+                                    .replaceAll("Score", "\nScore");
 
-                        //syncElement(driver,driver.findElement(By.xpath("(//div[@class='table-column locator-column healing-details'])[" + String.valueOf(i+1) + "]")), EnumsCommon.TOCLICKABLE.getText());
-                        String getTextForHeal = driver.findElement(By.xpath("(//div[@class='table-column locator-column healing-details'])[" + String.valueOf(i + 1) + "]")).getText()
-                                .replaceAll("Failed", "\nFailed")
-                                .replaceAll("Healed", "\nHealed")
-                                .replaceAll("Score", "\nScore");
+                            Thread.sleep(1000); // Consider replacing with WebDriverWait
+                            System.out.println("The Text Heal -> " + getTextForHeal);
 
-                        Thread.sleep(1000); // Consider using WebDriverWait for better synchronization
-
-                        // Take a screenshot of the updated state
-                        System.out.println("The Text Heal -> " + getTextForHeal);
-                        takeScreenshot(driver, By.xpath("//img[@id='myImg']"), i, getTextForHeal);
-
-                        // Optionally, click again to collapse or restore to initial state
-//                element.click();
+                            // Take a screenshot of the updated state
+                            takeScreenshot(driver, By.xpath("//img[@id='myImg']"), i, getTextForHeal);
+                        } catch (NoSuchElementException e) {
+                            System.err.println("No heal Element present for index: " + i);
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

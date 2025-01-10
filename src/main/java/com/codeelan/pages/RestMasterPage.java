@@ -2,9 +2,6 @@ package com.codeelan.pages;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.epam.healenium.SelfHealingDriver;
 import com.codeelan.libraies.FLUtilities;
@@ -78,5 +75,23 @@ public class RestMasterPage extends FLUtilities {
             object = ((JSONArray) object).get(index);
 
         return Arrays.asList(originalKey, object.toString());
+    }
+
+    public static String getValue(Response response, String reqValue, String givenParam, String givenValue) {
+        JSONObject jsonObject = new JSONObject(response.getBody().asString());
+        String result = "";
+        JSONArray array = (JSONArray) jsonObject.get("data");
+
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject object = array.getJSONObject(i);
+
+            // Check if the "status" matches the target status
+            if (object.has(givenParam) && givenValue.equals(object.getString(givenParam))) {
+                // Add the "email" value to the result list
+                result = object.getString(reqValue);
+            }
+        }
+
+        return result;
     }
 }

@@ -69,14 +69,17 @@ public class RecordActions {
         //Flow interface sheet
         String featureName = "Login functionality";
         String description = "Verify login functionality";
-        String scenario = args[0];
+        String scenario = "Scenario12";
         String testCaseName = "Verify login functionality";
         String testCaseWorkbook = "Product1.xlsx";
         String testCaseWorkbook1 = "API.xlsx";
         String execute = "Yes";
-        String url = args[1];
+        String url = "https://testautomationpractice.blogspot.com/";
+        String preUrl = url.replaceAll("www.", "");
+        String domain = preUrl.substring(preUrl.indexOf("//") + 2, preUrl.indexOf("."));
         System.out.println(scenario);
         System.out.println(url);
+        System.out.println(domain);
 
         if (!checkScenarioExists(scenario)) {
             System.out.println("Scenario already exists. Please check");
@@ -94,7 +97,7 @@ public class RecordActions {
         devTools.createSession();
         devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
         devTools.addListener(Network.requestWillBeSent(), entry -> {
-            if (URLDecoder.decode(entry.getRequest().getUrl()).contains(url) && !(URLDecoder.decode(entry.getRequest().getUrl()).contains("TypeError")) && !(requestDataTypes.stream().anyMatch(entry.getType().toString()::contains) || ignoredRequest.stream().anyMatch(URLDecoder.decode(entry.getRequest().getUrl())::contains))) {
+            if (URLDecoder.decode(entry.getRequest().getUrl()).contains(domain) && !(URLDecoder.decode(entry.getRequest().getUrl()).contains("TypeError")) && !(requestDataTypes.stream().anyMatch(entry.getType().toString()::contains) || ignoredRequest.stream().anyMatch(URLDecoder.decode(entry.getRequest().getUrl())::contains))) {
                 String postDataNL = entry.getRequest().getPostData().toString();
                 Map<String, String> tempHeader = new HashMap<>();
                 postDataNL = postDataNL.substring(postDataNL.indexOf("Optional") + 9).replaceAll("empty", "");
@@ -112,6 +115,7 @@ public class RecordActions {
                 newResult.put("Method", entry.getRequest().getMethod());
                 newResult.put("Params", "");
                 newResult.put("Auth", "");
+                System.out.println(entry.getRequest().getMethod() + "\t" + entry.getRequest().getHeaders());
                 for (String key : entry.getRequest().getHeaders().keySet())
                     tempHeader.put(key, entry.getRequest().getHeaders().get(key).toString());
 
@@ -121,6 +125,7 @@ public class RecordActions {
                         .collect(joining(" | "));
 
                 newResult.put("Headers", s);
+                postDataNL = postDataNL.endsWith("]") ? postDataNL.substring(0, postDataNL.length() - 1) : postDataNL;
                 newResult.put("Body", postDataNL);
                 newResult.put("Scripts", "");
                 newResult.put("Field", "");
@@ -257,7 +262,7 @@ public class RecordActions {
 
             if (!(secondDetails.isEmpty())) {
                 if (target.equalsIgnoreCase("select")) {
-                     if(action.equalsIgnoreCase("change"))
+                    if (action.equalsIgnoreCase("change"))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
                 } else {
                     if (attrib.containsKey("autocomplete") && !(action.equals(secondDetails.get("action"))) && !(action.equals("click")))
@@ -265,6 +270,8 @@ public class RecordActions {
                     else if (attrib.containsKey("autocomplete") && action.equals("change"))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
                     else if (!(uniqueLocators.equals(secondDetails.get("uniqueLocator"))))
+                        createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
+                    else if (target.equalsIgnoreCase("span"))
                         createSteps(ariaLabel, className, defaultValue, defaultChecked, id, localName, target, action, value, pageTitle, attrib, locator, type, checked, maxlength, placeholder);
                 }
             } else
@@ -282,56 +289,78 @@ public class RecordActions {
         String locatorType = locator.get(0);
         String locatorValue = locator.get(1);
 
-        if (!locatorType.equalsIgnoreCase("None")) {
+        if (!(locatorType.equalsIgnoreCase("None"))) {
             if (attributes.containsKey("type") && !(type.equals("select-one") | type.equals("radio")))
                 type = attributes.get("type");
-            switch (action) {
-                case "change":
-                case "input":
-                    switch (type) {
-                        case "checkbox":
-                        case "radio":
-                            stepsMap.put(stepsCount++, stepsDefaultValueCheckbox(key, locatorType, locatorValue, type, defaultChecked));
-                            stepsMap.put(stepsCount++, stepsCheckValue(key, locatorType, locatorValue, type, checked));
-                            stepsMap.put(stepsCount++, stepsVerifyCheckboxValue(key, locatorType, locatorValue, type, checked));
-                            break;
-                        case "select-one":
-                            stepsMap.put(stepsCount++, stepsDefaultValueDropdown(key, locatorType, locatorValue, type, defaultValue));
-                            setPlaceholder(key, locatorType, locatorValue, type, placeholder);
-                            stepsMap.put(stepsCount++, stepsSelectValue(key, locatorType, locatorValue, type, value));
-                            stepsMap.put(stepsCount++, stepsVerifyDropdownValue(key, locatorType, locatorValue, type, value));
-                            break;
-                        default:
-                            if(attributes.containsKey("autocomplete") && action.equals("change"))
-                                stepsMap.put(stepsCount++, stepsVerifyValue(key, locatorType, locatorValue, type, value));
-                            else {
+
+//            if(className.contains("Datepicker"))
+//                type = "date";
+            if (!(target.equalsIgnoreCase("label") | target.equalsIgnoreCase("option") | target.equalsIgnoreCase("a") | type.equalsIgnoreCase("select-multiple"))) {
+                switch (action) {
+                    case "change":
+                    case "input":
+                        switch (type) {
+                            case "checkbox":
+                            case "radio":
+                                stepsMap.put(stepsCount++, stepsDefaultValueCheckbox(key, locatorType, locatorValue, type, defaultChecked));
+                                stepsMap.put(stepsCount++, stepsCheckValue(key, locatorType, locatorValue, type, checked));
+                                stepsMap.put(stepsCount++, stepsVerifyCheckboxValue(key, locatorType, locatorValue, type, checked));
+                                break;
+                            case "select-one":
+                                stepsMap.put(stepsCount++, stepsDefaultValueDropdown(key, locatorType, locatorValue, type, defaultValue));
+                                setPlaceholder(key, locatorType, locatorValue, type, placeholder);
+                                stepsMap.put(stepsCount++, stepsSelectValue(key, locatorType, locatorValue, type, value));
+                                stepsMap.put(stepsCount++, stepsVerifyDropdownValue(key, locatorType, locatorValue, type, value));
+                                break;
+                            case "date":
                                 stepsMap.put(stepsCount++, stepsDefaultValue(key, locatorType, locatorValue, type, defaultValue));
                                 setMaxLength(key, locatorType, locatorValue, type, maxlength);
                                 setPlaceholder(key, locatorType, locatorValue, type, placeholder);
-                                stepsMap.put(stepsCount++, stepsEnterValue(key, locatorType, locatorValue, type, value));
-                                if(!action.equals("input"))
+                                stepsMap.put(stepsCount++, stepsEnterDateValue(key, locatorType, locatorValue, type, value));
+                                if (!action.equals("input"))
                                     stepsMap.put(stepsCount++, stepsVerifyValue(key, locatorType, locatorValue, type, value));
-                            }
-                    }
-                    break;
-                case "click":
-                    switch (type) {
-                        case "text":
-                            stepsMap.put(stepsCount++, stepsDefaultValue(key, locatorType, locatorValue, type, defaultValue));
-                            setMaxLength(key, locatorType, locatorValue, type, maxlength);
-                            setPlaceholder(key, locatorType, locatorValue, type, placeholder);
-                            break;
-                        case "select-one":
-                            stepsMap.put(stepsCount++, stepsDefaultValueDropdown(key, locatorType, locatorValue, type, defaultValue));
-                            stepsMap.put(stepsCount++, stepsSelectValue(key, locatorType, locatorValue, type, value));
-                            stepsMap.put(stepsCount++, stepsVerifyDropdownValue(key, locatorType, locatorValue, type, value));
-                            break;
-                        default:
-                            if (!type.equals("select-one"))
-                                stepsMap.put(stepsCount++, stepsClickElement(key, locatorType, locatorValue, type));
-                            //stepsMap.put(stepsCount++, stepsVerifyPage(pageTitle));
-                    }
-                    break;
+                                break;
+                            case "file":
+                                stepsMap.put(stepsCount++, stepsEnterValue(key, locatorType, locatorValue, type, value));
+                                break;
+                            default:
+                                if (attributes.containsKey("autocomplete") && action.equals("change"))
+                                    stepsMap.put(stepsCount++, stepsVerifyValue(key, locatorType, locatorValue, type, value));
+                                else {
+                                    stepsMap.put(stepsCount++, stepsDefaultValue(key, locatorType, locatorValue, type, defaultValue));
+                                    setMaxLength(key, locatorType, locatorValue, type, maxlength);
+                                    setPlaceholder(key, locatorType, locatorValue, type, placeholder);
+                                    stepsMap.put(stepsCount++, stepsEnterValue(key, locatorType, locatorValue, type, value));
+                                    if (!action.equals("input"))
+                                        stepsMap.put(stepsCount++, stepsVerifyValue(key, locatorType, locatorValue, type, value));
+                                }
+                        }
+                        break;
+                    case "click":
+                        switch (type) {
+                            case "text":
+                                stepsMap.put(stepsCount++, stepsDefaultValue(key, locatorType, locatorValue, type, defaultValue));
+                                setMaxLength(key, locatorType, locatorValue, type, maxlength);
+                                setPlaceholder(key, locatorType, locatorValue, type, placeholder);
+                                break;
+                            case "select-one":
+                                stepsMap.put(stepsCount++, stepsDefaultValueDropdown(key, locatorType, locatorValue, type, defaultValue));
+                                stepsMap.put(stepsCount++, stepsSelectValue(key, locatorType, locatorValue, type, value));
+                                stepsMap.put(stepsCount++, stepsVerifyDropdownValue(key, locatorType, locatorValue, type, value));
+                                break;
+//                            case "date":
+//                                stepsMap.put(stepsCount++, stepsClickDateElement(key, locatorType, locatorValue, type));
+                            default:
+                                if (!type.equals("select-one"))
+                                    stepsMap.put(stepsCount++, stepsClickElement(key, locatorType, locatorValue, type));
+                                //stepsMap.put(stepsCount++, stepsVerifyPage(pageTitle));
+                        }
+                        break;
+                }
+            } else if (target.equalsIgnoreCase("option")) {
+                stepsMap.put(stepsCount++, stepsClickMultiElement(key, locatorType, locatorValue, type));
+            } else if (target.equalsIgnoreCase("a")) {
+                stepsMap.put(stepsCount++, stepsClickLinkElement(key, target, defaultValue));
             }
         }
     }
@@ -418,6 +447,18 @@ public class RecordActions {
         return stepsInterfaceMap;
     }
 
+    public static Map<String, String> stepsEnterDateValue(String key, String locatorType, String locatorValue, String
+            type, String value) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+        stepsInterfaceMap.put("Steps", "Enter date value");
+        stepsInterfaceMap.put("Field Name", key);
+        stepsInterfaceMap.put("Locator Type", locatorType);
+        stepsInterfaceMap.put("Common Tag", locatorValue);
+        stepsInterfaceMap.put("Wizard Control Types", type);
+        stepsInterfaceMap.put("Test Data", value);
+        return stepsInterfaceMap;
+    }
+
     public static Map<String, String> stepsVerifyValue(String key, String locatorType, String locatorValue, String
             type, String value) {
         Map<String, String> stepsInterfaceMap = new HashMap<>();
@@ -481,6 +522,22 @@ public class RecordActions {
         return stepsInterfaceMap;
     }
 
+    public static Map<String, String> stepsClickMultiElement(String key, String locatorType, String locatorValue, String type) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+        stepsInterfaceMap.put("Steps", "Click multiple element");
+        stepsInterfaceMap.put("Locator Type", locatorType);
+        stepsInterfaceMap.put("Common Tag", locatorValue);
+        stepsInterfaceMap.put("Wizard Control Types", type);
+        return stepsInterfaceMap;
+    }
+
+    public static Map<String, String> stepsClickLinkElement(String key, String target, String locatorValue) {
+        Map<String, String> stepsInterfaceMap = new HashMap<>();
+        stepsInterfaceMap.put("Steps", "Click link");
+        stepsInterfaceMap.put("Locator Type", target);
+        stepsInterfaceMap.put("Common Tag", locatorValue);
+        return stepsInterfaceMap;
+    }
 
     public static Map<String, String> stepsClickElement(String key, String locatorType, String locatorValue, String type) {
         Map<String, String> stepsInterfaceMap = new HashMap<>();
@@ -490,6 +547,15 @@ public class RecordActions {
         stepsInterfaceMap.put("Wizard Control Types", type);
         return stepsInterfaceMap;
     }
+
+//    public static Map<String, String> stepsClickDateElement(String key, String locatorType, String locatorValue, String type) {
+//        Map<String, String> stepsInterfaceMap = new HashMap<>();
+//        stepsInterfaceMap.put("Steps", "Click date element");
+//        stepsInterfaceMap.put("Locator Type", locatorType);
+//        stepsInterfaceMap.put("Common Tag", locatorValue);
+//        stepsInterfaceMap.put("Wizard Control Types", type);
+//        return stepsInterfaceMap;
+//    }
 
     public static Map<String, String> stepsVerifyPage(String pageTitle) {
         Map<String, String> stepsInterfaceMap = new HashMap<>();
@@ -653,7 +719,7 @@ public class RecordActions {
                     row = sheet.createRow(counterRow++);
                     row.createCell(findColumnIndex(headerRow, "Steps")).setCellValue("Verify schema of preceding response");
                     String schema = resultantMap.get(count).get("Schema");
-                    schema = schema.substring(schema.lastIndexOf("\\")+1);
+                    schema = schema.substring(schema.lastIndexOf("\\") + 1);
                     row.createCell(findColumnIndex(headerRow, "Value")).setCellValue(EnumsCommon.EXPECTEDRESPONSE_FILES_PATH.getText() + scenario + "\\" + schema);
                 }
             }

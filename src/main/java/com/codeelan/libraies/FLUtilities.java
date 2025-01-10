@@ -26,7 +26,7 @@ public class FLUtilities extends BaseClass {
         try {
             FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
                     .pollingEvery(Duration.ofMillis(500))
-                    .withTimeout(Duration.ofSeconds(Integer.parseInt(configProperties.getProperty("explicit_wait"))))
+                    .withTimeout(Duration.ofSeconds(5))
                     .ignoring(NoSuchElementException.class);
 
             switch (conditionForWait) {
@@ -46,25 +46,48 @@ public class FLUtilities extends BaseClass {
             System.out.println("No Such Element Exception is showing on searching element " + element);
         } catch (Exception e) {
             Log.error("Could Not Sync WebElement ", e);
-            throw new FLException("Could Not Sync WebElement " + e.getMessage());
+            //throw new FLException("Could Not Sync WebElement " + e.getMessage());
+        }
+    }
+
+    protected void syncElement(SelfHealingDriver driver, By element, String conditionForWait) {
+        try {
+            FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
+                    .pollingEvery(Duration.ofMillis(500))
+                    .withTimeout(Duration.ofSeconds(5))
+                    .ignoring(NoSuchElementException.class);
+
+            switch (conditionForWait) {
+                case "Presence":
+                    wait.until(ExpectedConditions.numberOfElementsToBeMoreThan(element, 0));
+                    break;
+                default:
+                    throw new FLException("Invalid Condition " + conditionForWait);
+            }
+        } catch (StaleElementReferenceException | NoSuchElementException e) {
+            System.out.println("No Such Element Exception is showing on searching element " + element);
+        } catch (Exception e) {
+            Log.error("Could Not Sync WebElement ", e);
+            //throw new FLException("Could Not Sync WebElement " + e.getMessage());
         }
     }
 
     protected void clickElement(SelfHealingDriver driver, WebElement element) {
         scrollToWebElement(driver, element);
-        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
+//        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
         try {
             scrollToWebElement(driver, element);
+            element.sendKeys(Keys.chord(Keys.ARROW_RIGHT, Keys.ARROW_RIGHT, Keys.ARROW_RIGHT));
             element.click();
         } catch (Exception e) {
             try{
-                Log.info("Retrying click using JS class");
+                Log.info("Retrying click using click method");
                 clickElementByJSE(driver,element);
             }
             catch (Exception e1)
             {
                 try {
-                    Log.info("Retrying click using JS class");
+                    Log.info("Retrying click using action class");
                     new Actions(driver).moveToElement(element).click().perform();
                 } catch (Exception ex) {
                     Log.warn("Retrying click using moveByOffset due to failure", ex);
@@ -90,7 +113,7 @@ public class FLUtilities extends BaseClass {
 
     protected void clickElementByJSE(SelfHealingDriver driver, WebElement element) {
         waitForPageToLoad(driver);
-        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
+//        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
         try {
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
         } catch (Exception e) {
@@ -98,7 +121,6 @@ public class FLUtilities extends BaseClass {
             throw new FLException("Clicking WebElement By JavaScriptExecutor Failed " + e.getMessage() + element);
         }
     }
-
 
     protected void sendKeys(SelfHealingDriver driver, WebElement element, String stringToInput) {
         waitForPageToLoad(driver);
@@ -123,6 +145,14 @@ public class FLUtilities extends BaseClass {
                 throw new FLException(stringToInput + " could not be entered in element" + e1.getMessage());
             }
         }
+        waitForPageToLoad(driver);
+    }
+
+
+    protected void sendKeysJS(SelfHealingDriver driver, WebElement element, String stringToInput) {
+        waitForPageToLoad(driver);
+        syncElement(driver, element, EnumsCommon.TOVISIBLE.getText());
+        ((JavascriptExecutor) driver).executeScript("arguments[0].value = arguments[1];", element, stringToInput);
         waitForPageToLoad(driver);
     }
 
@@ -342,21 +372,26 @@ public class FLUtilities extends BaseClass {
     protected WebElement elementByLocator( SelfHealingDriver driver, String locatorType, String tagName, String attribute, String attributeValue) {
         WebElement element = null;
         waitForPageToLoad(driver);
-        sleepInMilliSeconds(2000);
+//        sleepInMilliSeconds(2000);
         switch (locatorType.trim().toLowerCase()){
             case "id" :
+                syncElement(driver, By.id(attributeValue), "Presence");
                 element = driver.findElement(By.id(attributeValue));
                 break;
             case "name" :
+                syncElement(driver, By.name(attributeValue), "Presence");
                 element = driver.findElement(By.name(attributeValue));
                 break;
             case "class" :
+                syncElement(driver, By.cssSelector("." + attributeValue.replaceAll(" ", ".")), "Presence");
                 element = driver.findElement(By.cssSelector("." + attributeValue.replaceAll(" ", ".")));
                 break;
             case "xpath" :
+                syncElement(driver, By.xpath(attributeValue), "Presence");
                 element = driver.findElement(By.xpath(attributeValue));
                 break;
             case "cssselector":
+                syncElement(driver, By.cssSelector(attributeValue), "Presence");
                 element = driver.findElement(By.cssSelector(attributeValue));
                 break;
             default:

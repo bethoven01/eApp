@@ -73,16 +73,16 @@ public class BaseClass {
      * <p>
      * Implicit Wait: Value for Implicit Wait can be changed from config.properties file.
      */
-    protected SelfHealingDriver getWebDriver(TestContext testContext) {
+    protected SelfHealingDriver getWebDriver(TestContext testContext, String browser) {
         try {
             //System.setProperty("webdriver.chrome.driver","/usr/local/bin/chromedriver");
-            if(testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API")))
+            if(testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API") || tag.equals("@Test")))
             {
                 Log.info("API Test - No WebDriver required."); return null; // No WebDriver for API tests
             }
 
             if (configProperties.getProperty("execution.type").trim().equalsIgnoreCase("local")) {
-                switch (testContext.getBrowser()) {
+                switch (browser.trim()) {
                     case "Chrome":
                         delegate = new ChromeDriver(getChromeOptions());
                         break;
@@ -486,7 +486,7 @@ public class BaseClass {
 
         try {
             if (driver != null) {
-                driver.quit();
+//                driver.quit();
                 Log.info("Driver Quit Successfully");
             }
             Log.info("<<<===== END OF TEST =====>>>");
@@ -503,7 +503,7 @@ public class BaseClass {
      */
     public static void waitForPageToLoad(SelfHealingDriver driver) {
         FluentWait<SelfHealingDriver> wait = new FluentWait<>(driver)
-                .withTimeout(Duration.ofSeconds(60)) // Maximum wait time
+                .withTimeout(Duration.ofSeconds(10)) // Maximum wait time
                 .pollingEvery(Duration.ofMillis(100)) // Polling interval
                 .ignoring(Exception.class);
 

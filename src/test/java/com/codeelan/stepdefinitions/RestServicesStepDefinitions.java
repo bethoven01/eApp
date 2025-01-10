@@ -44,10 +44,16 @@ public class RestServicesStepDefinitions extends FLUtilities {
     @Given("Call API {int} {string} request {string} URL")
     public void callAPI(int counterAPI, String restURL, String method) {
         response = onRestMasterPage.callRESTservice(restURL, method, String.valueOf(counterAPI), testContext, rest_All);
-        respBody = response.getBody().prettyPrint();
+//        respBody = response.getBody().prettyPrint();
     }
 
     //status code , schema, status line, body ->
+
+    @Given("Save field {string} as {string} from response where {string} is {string}")
+    public void saveFieldFromResponse(String reqValue, String name, String givenParam, String givenValue) {
+        givenValue = onRestMasterPage.getValue(response, reqValue, givenParam, givenValue);
+        addPropertyValueInJSON(testContext.getTestCaseID(), testContext, name, givenValue);
+    }
 
     @Given("Save Field from Response {string}")
     public void saveFieldFromResponse(String fields) {
@@ -112,5 +118,11 @@ public class RestServicesStepDefinitions extends FLUtilities {
     @Then("Verify response body Call API {int} for key {string} should be empty")
     public void verifyResponseBodyCallAPIForKeyShouldBeEmpty(int apiCount, String actualValue) {
         AssertionHelper.assertEmpty(AssertionHelper.getNodeValue(response, actualValue), actualValue);
+    }
+
+    @Then("wait for element as {int} sec")
+    public void waitForElementAsSec(int waitTime) throws InterruptedException {
+        waitTime = waitTime*(1000);
+        Thread.sleep(waitTime);
     }
 }
