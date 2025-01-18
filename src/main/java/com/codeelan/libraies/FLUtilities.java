@@ -76,14 +76,12 @@ public class FLUtilities extends BaseClass {
         scrollToWebElement(driver, element);
 //        syncElement(driver, element, EnumsCommon.TOCLICKABLE.getText());
         try {
-            clickElementByJSE(driver,element);
+            clickElementByJSE(driver, element);
         } catch (Exception e) {
-            try{
+            try {
                 Log.info("Retrying click using click method");
                 element.click();
-            }
-            catch (Exception e1)
-            {
+            } catch (Exception e1) {
                 try {
                     Log.info("Retrying click using action class");
                     new Actions(driver).moveToElement(element).click().perform();
@@ -96,6 +94,21 @@ public class FLUtilities extends BaseClass {
                         throw new FLException("Could not click WebElement using Actions and moveByOffset: " + finalEx.getMessage() + "Element -> " + element);
                     }
                 }
+            }
+        }
+    }
+
+    protected void doubleclickElement(SelfHealingDriver driver, WebElement element) {
+        scrollToWebElement(driver, element);
+        try {
+            doubleClickElementByJSE(driver, element);
+        } catch (Exception e) {
+            try {
+                new Actions(driver).moveToElement(element).doubleClick().perform();
+                Log.info("Double-clicked element successfully using Actions: "+element);
+            } catch (Exception finalEx) {
+                Log.error("Double-click failed using both JavaScriptExecutor and Actions.",finalEx);
+                throw new FLException("Could not double click WebElement using all methods: " + finalEx.getMessage() + "Element -> " + element);
             }
         }
     }
@@ -120,6 +133,16 @@ public class FLUtilities extends BaseClass {
         }
     }
 
+    protected void doubleClickElementByJSE(SelfHealingDriver driver, WebElement element) {
+        waitForPageToLoad(driver);
+        try {
+            ((JavascriptExecutor) driver).executeScript("var evt = new MouseEvent('dblclick', {bubbles: true, cancelable: true, view: window}); arguments[0].dispatchEvent(evt);", element);
+        } catch (Exception e) {
+            Log.error("Clicking WebElement By JavaScriptExecutor Failed ", e);
+            throw new FLException("Clicking WebElement By JavaScriptExecutor Failed " + e.getMessage() + element);
+        }
+    }
+
 
     protected void sendKeys(SelfHealingDriver driver, WebElement element, String stringToInput) {
         waitForPageToLoad(driver);
@@ -128,7 +151,7 @@ public class FLUtilities extends BaseClass {
             element.clear();
             clickElement(driver, element);
             element.sendKeys(stringToInput);
-           // element.sendKeys(Keys.TAB);
+            // element.sendKeys(Keys.TAB);
         } catch (Exception e) {
             try {
                 waitForPageToLoad(driver);
@@ -312,13 +335,10 @@ public class FLUtilities extends BaseClass {
     }
 
     protected List<WebElement> getElements(SelfHealingDriver driver, By locator) {
-        try
-        {
+        try {
             waitForPageToLoad(driver);
             return driver.findElements(locator);
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             Log.error("Could not find elements with locator " + locator, e);
             throw new FLException("Could not find elements with locator >>>> " + e.getMessage());
         }
@@ -328,7 +348,7 @@ public class FLUtilities extends BaseClass {
      * By using Action class and its methods along with X/Y co-ordinates this method will draw/add digital signature on
      * specified WebElement (passed as parameter).
      *
-     * @param driver The SelfHealingDriver instance
+     * @param driver  The SelfHealingDriver instance
      * @param element The WebElement on which digital signature needs to be added
      */
     protected void addDigitalSignature(SelfHealingDriver driver, WebElement element) {
@@ -368,45 +388,46 @@ public class FLUtilities extends BaseClass {
         }
     }
 
-    protected WebElement elementByLocator( SelfHealingDriver driver, String locatorType, String tagName, String attribute, String attributeValue) {
+    protected WebElement elementByLocator(SelfHealingDriver driver, String locatorType, String tagName, String attribute, String attributeValue) {
         WebElement element = null;
         waitForPageToLoad(driver);
 //        sleepInMilliSeconds(2000);
-        if(locatorType.equalsIgnoreCase("class") && attributeValue.contains(" "))
-        {
+        if (locatorType.equalsIgnoreCase("class") && attributeValue.contains(" ")) {
             sleepInMilliSeconds(1000);
-            attributeValue= "." + attributeValue.trim().replaceAll("\\s+", ".");
-            locatorType="cssselector";
+            attributeValue = "." + attributeValue.trim().replaceAll("\\s+", ".");
+            locatorType = "cssselector";
         }
-        switch (locatorType.trim().toLowerCase()){
-            case "id" :
+        switch (locatorType.trim().toLowerCase()) {
+            case "id":
                 syncElement(driver, By.id(attributeValue), "Presence");
                 element = driver.findElement(By.id(attributeValue));
                 break;
-            case "name" :
+            case "name":
                 syncElement(driver, By.name(attributeValue), "Presence");
                 element = driver.findElement(By.name(attributeValue));
                 break;
-            case "tag" :
+            case "tag":
                 syncElement(driver, By.tagName(attributeValue), "Presence");
                 element = driver.findElement(By.tagName(attributeValue));
                 break;
-            case "class" :
+            case "class":
                 syncElement(driver, By.className(attributeValue), "Presence");
                 element = driver.findElement(By.className(attributeValue));
                 break;
-            case "linktext" :
+            case "linktext":
                 syncElement(driver, By.linkText(attributeValue), "Presence");
                 element = driver.findElement(By.linkText(attributeValue));
                 break;
-            case "partialinktext" :
+            case "partialinktext":
                 syncElement(driver, By.partialLinkText("." + attributeValue.replaceAll(" ", ".")), "Presence");
                 element = driver.findElement(By.partialLinkText("." + attributeValue.replaceAll(" ", ".")));
                 break;
-            case "xpath" :
+            case "xpath":
+                syncElement(driver, By.xpath(attributeValue), "Presence");
                 element = driver.findElement(By.xpath(attributeValue));
                 break;
             case "cssselector":
+                syncElement(driver, By.cssSelector(attributeValue), "Presence");
                 element = driver.findElement(By.cssSelector(attributeValue));
                 break;
             default:
@@ -416,30 +437,30 @@ public class FLUtilities extends BaseClass {
         return element;
     }
 
-    protected List<WebElement> elementsByLocator( SelfHealingDriver driver, String locatorType, String tagName, String attribute, String attributeValue) {
+    protected List<WebElement> elementsByLocator(SelfHealingDriver driver, String locatorType, String tagName, String attribute, String attributeValue) {
         List<WebElement> elements = null;
-        switch (locatorType.trim().toLowerCase()){
-            case "id" :
+        switch (locatorType.trim().toLowerCase()) {
+            case "id":
                 elements = driver.findElements(By.id(attributeValue));
                 break;
-            case "name" :
+            case "name":
                 elements = driver.findElements(By.name(attributeValue));
                 break;
-            case "class" :
+            case "class":
                 elements = driver.findElements(By.className(attributeValue));
                 break;
-            case "xpath" :
+            case "xpath":
                 elements = driver.findElements(By.xpath("//" + tagName + "[@" + attribute + "='" + attributeValue + "']"));
                 break;
-            case "tag" :
+            case "tag":
                 syncElement(driver, By.tagName(attributeValue), "Presence");
                 elements = driver.findElements(By.tagName(attributeValue));
                 break;
-            case "linkText" :
+            case "linkText":
                 syncElement(driver, By.linkText(attributeValue), "Presence");
                 elements = driver.findElements(By.linkText(attributeValue));
                 break;
-            case "partialinktext" :
+            case "partialinktext":
                 syncElement(driver, By.partialLinkText("." + attributeValue.replaceAll(" ", ".")), "Presence");
                 elements = driver.findElements(By.partialLinkText("." + attributeValue.replaceAll(" ", ".")));
                 break;

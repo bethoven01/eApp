@@ -74,7 +74,7 @@ public class BaseClass {
      * <p>
      * Implicit Wait: Value for Implicit Wait can be changed from config.properties file.
      */
-    protected SelfHealingDriver getWebDriver(TestContext testContext) {
+    protected SelfHealingDriver getWebDriver(TestContext testContext, String browser) {
         try {
             //System.setProperty("webdriver.chrome.driver","/usr/local/bin/chromedriver");
             if(testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API") || tag.equals("@Test")))
@@ -83,8 +83,7 @@ public class BaseClass {
             }
 
             if (configProperties.getProperty("execution.type").trim().equalsIgnoreCase("local")) {
-
-                switch (testContext.getBrowser()) {
+                switch (browser.trim()) {
                     case "Chrome":
                         delegate = new ChromeDriver(getChromeOptions());
                         break;
@@ -487,8 +486,8 @@ public class BaseClass {
         captureScreenshot(driver, testContext, true);
 
         try {
-            if (driver != null) {
-                driver.quit();
+            if (testContext.getDriver() != null) {
+                testContext.getDriver().quit();
                 Log.info("Driver Quit Successfully");
             }
             Log.info("<<<===== END OF TEST =====>>>");

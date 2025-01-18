@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.io.*;
 import java.util.List;
@@ -30,11 +31,6 @@ public class Hooks extends FLUtilities {
     @Before
     public void setUp(Scenario scenario) {
         loadConfigData(testContext);
-        testContext.setScenario(scenario);
-        if (testContext.getDriver() == null) {
-            testContext.setDriver(getWebDriver(testContext));
-        }
-        testContext.setPageObjectManager(new PageObjectManager(testContext.getDriver()));
         testContext.setScenario(scenario);
     }
 //
@@ -98,7 +94,14 @@ public class Hooks extends FLUtilities {
 
         if (!testContext.getScenario().getSourceTagNames().stream().anyMatch(tag -> tag.contains("API") || tag.equals("@Test"))) {
 
-            String sessionID = ((ChromeDriver) testContext.getDriver().getDelegate()).getSessionId().toString();
+            String sessionID = null;
+            WebDriver delegate = testContext.getDriver().getDelegate();
+
+            if (delegate instanceof RemoteWebDriver) {
+                sessionID = ((RemoteWebDriver) delegate).getSessionId().toString();
+            } else {
+                throw new IllegalStateException("Unsupported browser driver: " + delegate.getClass().getName());
+            }
 
             //String sessionID = ((ChromeDriver) testContext.getDriver()).getSessionId().toString();
             System.out.println("Session ID end " + sessionID);

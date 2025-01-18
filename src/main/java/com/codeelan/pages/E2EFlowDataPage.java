@@ -100,6 +100,7 @@ public class E2EFlowDataPage extends FLUtilities {
                 int testCaseSheetIndex = findColumnIndex(headerRow, "TestCaseSheet");
                 int tagsIndex = findColumnIndex(headerRow, "Tags");
                 int executeIndex = findColumnIndex(headerRow, "Execute");
+                int browserIndex = findColumnIndex(headerRow, "Browser");
 
                 // Iterate through the rows of the sheet, starting from the second row
                 while (iterator.hasNext()) {
@@ -113,6 +114,7 @@ public class E2EFlowDataPage extends FLUtilities {
                     String testCaseSheet = getCellValue(currentRow.getCell(testCaseSheetIndex));
                     String tags = getCellValue(currentRow.getCell(tagsIndex));
                     String execute = getCellValue(currentRow.getCell(executeIndex));
+                    String browser = getCellValue(currentRow.getCell(browserIndex));
 
                     // Check if the 'Execute' column value is 'yes'
                     if (execute.equalsIgnoreCase("yes")) {
@@ -121,11 +123,12 @@ public class E2EFlowDataPage extends FLUtilities {
                         tagsList.remove("");
                         tagsList = tagsList.stream().map(tag -> "@" + tag.trim()).collect(Collectors.toList());
                         String allTags = String.join(" ", tagsList);
+                        List<String> browserList = new ArrayList<>(List.of(browser.split(",")));
                         createRunnerFile(testingType, scenario, tags);
 
                         switch (testingType) {
                             case "UI":
-                                createUIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData, allTags);
+                                createUIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData, allTags, browserList);
                                 break;
                             case "API":
                                 createAPIFeatureFile(featureName, description, scenario, testCaseName, testCaseSheet, testingType, jsonTestData, allTags);
@@ -159,7 +162,7 @@ public class E2EFlowDataPage extends FLUtilities {
      * @param scenario     - product name
      * @param testCaseName - Spec from client
      */
-    public void createUIFeatureFile(String featureName, String description, String scenario, String testCaseName, String testCaseSheet, String testingType, JSONObject jsonTestData, String allTags) {
+    public void createUIFeatureFile(String featureName, String description, String scenario, String testCaseName, String testCaseSheet, String testingType, JSONObject jsonTestData, String allTags, List<String> browserList) {
         List<String> lines = new ArrayList<>();
         File tempFile = null;
         String line;
@@ -167,79 +170,82 @@ public class E2EFlowDataPage extends FLUtilities {
         try {
             lines.add("Feature: " + featureName + "\n");
             lines.add("\t" + description + "\n");
-            lines.add("\t" + allTags);
-            lines.add("\tScenario: " + scenario + " - " + testCaseName);
-            lines.add("\t\tGiven User is on login page for TestCase \"" + testingType + "-" + scenario + "\"");
 
-            String filePath = EnumsCommon.ABSOLUTE_CLIENTFILES_PATH.getText() + testCaseSheet;
-            // Read excel file to create test data
-            FileInputStream file = new FileInputStream(filePath);
-            XSSFWorkbook workbook = new XSSFWorkbook(file);
+            for(String browser : browserList) {
+                lines.add("\n\t" + allTags);
+                lines.add("\tScenario: " + scenario + " - " + testCaseName + " - " + browser);
+                lines.add("\t\tGiven User is on login page for TestCase \"" + testingType + "-" + scenario + "\" on browser \"" + browser + "\"" );
 
-            Sheet sheet = workbook.getSheet(scenario);
-            Iterator<Row> iterator = sheet.iterator();
+                String filePath = EnumsCommon.ABSOLUTE_CLIENTFILES_PATH.getText() + testCaseSheet;
+                // Read excel file to create test data
+                FileInputStream file = new FileInputStream(filePath);
+                XSSFWorkbook workbook = new XSSFWorkbook(file);
 
-            Row headerRow = iterator.next().getSheet().getRow(0);
+                Sheet sheet = workbook.getSheet(scenario);
+                Iterator<Row> iterator = sheet.iterator();
 
-            int stepsIndex = findColumnIndex(headerRow, "Steps");
-            int locatorTypeIndex = findColumnIndex(headerRow, "Locator Type");
-            int commonTagIndex = findColumnIndex(headerRow, "Common Tag");
-            int wizardControlTypesIndex = findColumnIndex(headerRow, "Wizard Control Types");
-            int testDataIndex = findColumnIndex(headerRow, "Test Data");
-            int attributeIndex = findColumnIndex(headerRow, "Attribute");
-            int fieldNameIndex = findColumnIndex(headerRow, "Field Name");
-            int fileNameIndex = findColumnIndex(headerRow, "File Name");
-            int stepsRangeIndex = findColumnIndex(headerRow, "Steps Range");
+                Row headerRow = iterator.next().getSheet().getRow(0);
 
-            // Iterate through the rows of the sheet, starting from the second row
-            JSONObject tempJson = new JSONObject();
-            JSONObject tempReusableJson = new JSONObject();
-            int countReused = 1;
+                int stepsIndex = findColumnIndex(headerRow, "Steps");
+                int locatorTypeIndex = findColumnIndex(headerRow, "Locator Type");
+                int commonTagIndex = findColumnIndex(headerRow, "Common Tag");
+                int wizardControlTypesIndex = findColumnIndex(headerRow, "Wizard Control Types");
+                int testDataIndex = findColumnIndex(headerRow, "Test Data");
+                int attributeIndex = findColumnIndex(headerRow, "Attribute");
+                int fieldNameIndex = findColumnIndex(headerRow, "Field Name");
+                int fileNameIndex = findColumnIndex(headerRow, "File Name");
+                int stepsRangeIndex = findColumnIndex(headerRow, "Steps Range");
 
-            while (iterator.hasNext()) {
-                Row currentRow = iterator.next();
+                // Iterate through the rows of the sheet, starting from the second row
+                JSONObject tempJson = new JSONObject();
+                JSONObject tempReusableJson = new JSONObject();
+                int countReused = 1;
 
-                // Retrieve cell values from the current row based on the header indexes
-                String steps = getCellValue(currentRow.getCell(stepsIndex));
-                String locatorType = getCellValue(currentRow.getCell(locatorTypeIndex));
-                String commonTag = getCellValue(currentRow.getCell(commonTagIndex)).replaceAll("\"", "'");
-                String wizardControlTypes = getCellValue(currentRow.getCell(wizardControlTypesIndex));
-                String testData = getCellValue(currentRow.getCell(testDataIndex));
-                String attribute = getCellValue(currentRow.getCell(attributeIndex));
-                String fieldName = getCellValue(currentRow.getCell(fieldNameIndex));
-                String fileName = getCellValue(currentRow.getCell(fileNameIndex));
-                String stepRange = getCellValue(currentRow.getCell(stepsRangeIndex));
+                while (iterator.hasNext()) {
+                    Row currentRow = iterator.next();
 
-                if (testData.contains("https")) {
-                    configProperties.setProperty("QA.url", testData);
-                    System.out.println("url = " + testData);
+                    // Retrieve cell values from the current row based on the header indexes
+                    String steps = getCellValue(currentRow.getCell(stepsIndex));
+                    String locatorType = getCellValue(currentRow.getCell(locatorTypeIndex));
+                    String commonTag = getCellValue(currentRow.getCell(commonTagIndex)).replaceAll("\"", "'");
+                    String wizardControlTypes = getCellValue(currentRow.getCell(wizardControlTypesIndex));
+                    String testData = getCellValue(currentRow.getCell(testDataIndex));
+                    String attribute = getCellValue(currentRow.getCell(attributeIndex));
+                    String fieldName = getCellValue(currentRow.getCell(fieldNameIndex));
+                    String fileName = getCellValue(currentRow.getCell(fileNameIndex));
+                    String stepRange = getCellValue(currentRow.getCell(stepsRangeIndex));
+
+                    if (testData.contains("https")) {
+                        configProperties.setProperty("QA.url", testData);
+                        System.out.println("url = " + testData);
+                    }
+
+                    lines.add("\t\t" + createUIStep(steps, locatorType, commonTag, wizardControlTypes, testData, attribute, fieldName, lines, fileName, stepRange, tempReusableJson, testingType, scenario));
+                    if (steps.equals("Use Reusable Method")) {
+                        Map<String, String> tempMap = (Map<String, String>) jsonTestData.get(testingType + "-" + fileName);
+                        tempJson.putAll(tempMap);
+                    }
+                    if (!(fieldName.isEmpty() || testData.isEmpty())) {
+                        Map<String, String> reusedJson = new HashMap<>();
+                        reusedJson.put(fieldName, testData);
+                        tempReusableJson.put(countReused, reusedJson);
+                        tempJson.put(fieldName, testData);
+                    }
+                    countReused++;
                 }
 
-                lines.add("\t\t" + createUIStep(steps, locatorType, commonTag, wizardControlTypes, testData, attribute, fieldName, lines, fileName, stepRange, tempReusableJson, testingType, scenario));
-                if (steps.equals("Use Reusable Method")) {
-                    Map<String, String> tempMap = (Map<String, String>) jsonTestData.get(testingType + "-" + fileName);
-                    tempJson.putAll(tempMap);
-                }
-                if (!(fieldName.isEmpty() || testData.isEmpty())) {
-                    Map<String, String> reusedJson = new HashMap<>();
-                    reusedJson.put(fieldName, testData);
-                    tempReusableJson.put(countReused, reusedJson);
-                    tempJson.put(fieldName, testData);
-                }
-                countReused++;
-            }
-
-            tempFile = new File(EnumsCommon.FEATUREFILESPATH.getText() + "/TestCases/" + testingType + "-" + scenario + "_" + "Test.feature");
-            tempFile.getParentFile().mkdirs();
-            FileWriter featureFile = new FileWriter(tempFile);
-            BufferedWriter writer = new BufferedWriter(featureFile);
-            for (String line1 : lines)
-                writer.write(line1 + "\n");
-            writer.close();
-            System.out.println("Feature File Created");
-            System.out.println("url = " + configProperties.getProperty("QA.url"));
-            updateJSON(jsonTestData, testingType, scenario, tempJson);
+                tempFile = new File(EnumsCommon.FEATUREFILESPATH.getText() + "/TestCases/" + testingType + "-" + scenario + "_" + "Test.feature");
+                tempFile.getParentFile().mkdirs();
+                FileWriter featureFile = new FileWriter(tempFile);
+                BufferedWriter writer = new BufferedWriter(featureFile);
+                for (String line1 : lines)
+                    writer.write(line1 + "\n");
+                writer.close();
+                System.out.println("Feature File Created");
+                System.out.println("url = " + configProperties.getProperty("QA.url"));
+                updateJSON(jsonTestData, testingType, scenario, tempJson);
 //            masterJson.put(testingType + "-" + scenario, tempJson);
+            }
         } catch (IOException e) {
             throw new FLException("File is inaccessible" + e.getMessage());
         } catch (Exception e) {
@@ -294,7 +300,7 @@ public class E2EFlowDataPage extends FLUtilities {
             lines.add("\t" + description + "\n");
             lines.add("\t" + allTags);
             lines.add("\tScenario: " + scenario + " - " + testCaseName);
-            lines.add("\t\tGiven User is on login page for TestCase \"" + testingType + "-" + scenario + "\"");
+            lines.add("\t\tGiven User is on login page for TestCase \"" + testingType + "-" + scenario + "\" on browser \"Chrome\"" );
 
             String filePath = EnumsCommon.ABSOLUTE_CLIENTFILES_PATH.getText() + testCaseSheet;
             // Read excel file to create test data
@@ -409,6 +415,9 @@ public class E2EFlowDataPage extends FLUtilities {
                 return "When " + steps + " \"" + testData + "\"";
             case "Verify Page Title":
                 return "Then " + steps + " is \"" + testData + "\"";
+            case "Click to go backward":
+            case "Click to go forward":
+                return "Then " + steps ;
             case "Enter value":
             case "Enter date value":
                 if (locatorType.contains("xpath")) {
@@ -419,6 +428,7 @@ public class E2EFlowDataPage extends FLUtilities {
             case "\"Check\"":
             case "\"Uncheck\"":
             case "Click element":
+            case "Double Click element":
             case "Click multiple element":
                 return "Then " + steps + " \"" + wizardControlTypes + "\" having \"" + locatorType + "\" \"" + commonTag + "\"";
             case "Click link":

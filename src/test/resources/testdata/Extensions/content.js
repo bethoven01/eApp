@@ -4,10 +4,6 @@
 		localStorage.setItem('capturedEvents', JSON.stringify([]));
 	}
 
-	 // Navigation history stack to track forward/backward actions
-        let historyStack = [location.href];
-        let currentIndex = 0;
-
 	// Utility to fetch all captured events
 	function getCapturedEvents() {
 		const capturedEvents = JSON.parse(localStorage.getItem('capturedEvents')) || [];
@@ -25,47 +21,6 @@
 		// Notify other tabs/windows of the update
 		window.dispatchEvent(new CustomEvent('storageUpdated'));
 	}
-
-	 // Function to log navigation events
-        function logNavigationEvent(actionType, details) {
-            const newEvent = {
-                details: {
-                    title: document.title,
-                    action: actionType, // "backward" or "forward"
-                    url: details.url || location.href,
-                    state: details.state || null,
-                }
-            };
-            updateCapturedEvents(newEvent);
-        }
-
-         // Listen for popstate events
-            window.addEventListener('popstate', (event) => {
-                const currentURL = location.href;
-
-                if (currentIndex > 0 && historyStack[currentIndex - 1] === currentURL) {
-                    // User navigated backward
-                    currentIndex--;
-                    logNavigationEvent('backward', { url: currentURL, state: event.state });
-                } else if (currentIndex < historyStack.length - 1 && historyStack[currentIndex + 1] === currentURL) {
-                    // User navigated forward
-                    currentIndex++;
-                    logNavigationEvent('forward', { url: currentURL, state: event.state });
-                } else {
-                    // Handle edge cases (e.g., direct URL manipulation)
-                    logNavigationEvent('unknown', { url: currentURL, state: event.state });
-                }
-            });
-
-             // Listen for hashchange events (optional)
-                window.addEventListener('hashchange', (event) => {
-                    logNavigationEvent('hashchange', { url: event.newURL });
-                });
-
-
-
-
-
 
 	// Function to get attributes of an element
 	var getAttributes = function(element) {
@@ -420,22 +375,9 @@
 					innerText: innerText // Add the innerText to the details
 				}
 			};
-
 			updateCapturedEvents(newEvent);
 		}
 	};
-
-	// Update history stack whenever the user navigates to a new URL
-        function updateHistoryStack(newURL) {
-            if (historyStack[currentIndex] !== newURL) {
-                historyStack = historyStack.slice(0, currentIndex + 1);
-                historyStack.push(newURL);
-                currentIndex++;
-            }
-        }
-
-        // Update the history stack on page load or new navigation
-        updateHistoryStack(location.href);
 
 	// Register event listeners
 	['click', 'dblclick', 'select', 'toggle', 'change', 'hashchange', 'load', 'input', 'submit'].forEach(eventType => {
